@@ -8,14 +8,14 @@ class Field(Enum):
 
 
 class Game:
-    def __init__(self, n: int = 8, m: int = 8):
+    def __init__(self, n: int = 8, m: int = 8) -> None:
         self.n: int = n
         self.m: int = m
         self.firstPlayersTurn: bool = True
 
         self.board_matrix = [[Field.EMPTY for _ in range(m)] for _ in range(n)]
 
-    def place(self, x: int, y: int):
+    def place(self, x: int, y: int) -> None:
         if not self.isValidMove(x, y):
             return
 
@@ -29,7 +29,7 @@ class Game:
             self.board_matrix[x+1][y] = fieldToWrite
         return
 
-    def isValidMove(self, x: int, y: int):
+    def isValidMove(self, x: int, y: int) -> bool:
         if self.firstPlayersTurn:
             return self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x][y+1] is Field.EMPTY
         else:
@@ -50,7 +50,7 @@ class Game:
         return output_str
 
 
-game = Game()
+game: Game = Game()
 game.place(1, 1)
 
 print(game)
