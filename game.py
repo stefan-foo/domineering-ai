@@ -24,16 +24,21 @@ class Game:
         self.board_matrix[x][y] = fieldToWrite
 
         if self.firstPlayersTurn:  # vertical
-            self.board_matrix[x][y+1] = fieldToWrite
-        else:  # horizontal
             self.board_matrix[x+1][y] = fieldToWrite
+        else:  # horizontal
+            self.board_matrix[x][y+1] = fieldToWrite
+        self.firstPlayersTurn = not self.firstPlayersTurn
         return
 
     def isValidMove(self, x: int, y: int):
+        if x < 0 or y < 0:
+          return False
         if self.firstPlayersTurn:
-            return self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x][y+1] is Field.EMPTY
+            return x < self.n - 1 and y < self.m and (
+              self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x+1][y] is Field.EMPTY)
         else:
-            return self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x+1][y] is Field.EMPTY
+            return x < self.n and y < self.m - 1 and (
+              self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x][y+1] is Field.EMPTY)
 
     def __str__(self):
         output_str = ""
@@ -51,6 +56,6 @@ class Game:
 
 
 game = Game()
-game.place(1, 1)
-
+game.place(6, 1)
+game.place(7, 2)
 print(game)
