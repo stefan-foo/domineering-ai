@@ -1,36 +1,56 @@
-from bitarray import bitarray
+from enum import Enum
+
+
+class Field(Enum):
+    EMPTY = 1
+    PLAYER1 = 2
+    PLAYER2 = 3
+
 
 class Game:
-  def __init__(self, n = 8, m = 8, playerIsVertical = True):
-    self.playerToMove = playerIsVertical
-    self.playerIsVertical = True
-    self.n = n
-    self.m = m
+    def __init__(self, n: int = 8, m: int = 8):
+        self.n: int = n
+        self.m: int = m
+        self.firstPlayersTurn: bool = True
 
-    arraySize = n * m
-    self.hBitArray = bitarray(arraySize)
-    self.vBitArray = bitarray(arraySize)
-    self.hBitArray.setall(0)
-    self.vBitArray.setall(0)
+        self.board_matrix = [[Field.EMPTY for _ in range(m)] for _ in range(n)]
 
-  def place(self, move):
-    if not self.isValid(move):
-      return
+    def place(self, x: int, y: int):
+        if not self.isValidMove(x, y):
+            return
 
-  def isValid(self, move, isVertical):
-    (x, y) = move
-    x1 = (x - 1) * self.m
-    y1 = (y - 1)
-    x2 = x1 if not isVertical else x1 + self.m
-    y1 = y1 if isVertical else y1 + 1
+        fieldToWrite: Field = Field.PLAYER1 if self.firstPlayersTurn else Field.PLAYER2
 
-    return not (self.hBitArray[x1 ] or self.hBitArray[x * self.m + y + 1] or self.vBitArray[x])
+        self.board_matrix[x][y] = fieldToWrite
 
-  def __str__(self):
-    output = ""
-    for i in range(0, self.m * self.n):
-      output += "h" if self.hBitArray[i] else ("v" if self.vBitArray[i] else "-")
-      output += "\n" if i % self.n == 0 else ""
-    return output
-  
+        if self.firstPlayersTurn:  # vertical
+            self.board_matrix[x][y+1] = fieldToWrite
+        else:  # horizontal
+            self.board_matrix[x+1][y] = fieldToWrite
+        return
+
+    def isValidMove(self, x: int, y: int):
+        if self.firstPlayersTurn:
+            return self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x][y+1] is Field.EMPTY
+        else:
+            return self.board_matrix[x][y] is Field.EMPTY and self.board_matrix[x+1][y] is Field.EMPTY
+
+    def __str__(self):
+        output_str = ""
+        for i in range(self.n):
+            for j in range(self.m):
+                match self.board_matrix[i][j]:
+                    case Field.EMPTY:
+                        output_str += "[ ]"
+                    case Field.PLAYER1:
+                        output_str += "[*]"
+                    case Field.PLAYER2:
+                        output_str += "[x]"
+            output_str += "\n"
+        return output_str
+
+
 game = Game()
+game.place(1, 1)
+
+print(game)
