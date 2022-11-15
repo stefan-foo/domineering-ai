@@ -57,13 +57,8 @@ class Game:
         return output_str
 
 
-<< << << < HEAD
 game: Game = Game()
 game.place(1, 1)
-
-== == == =
-game = Game()
 game.place(6, 1)
 game.place(7, 2)
->>>>>> > ffa9783bc86f2a5b391cf0033def422bc3bf733b
 print(game)
