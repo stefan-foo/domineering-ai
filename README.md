@@ -1,1 +1,1 @@
-# domineer-ai
+# domineering-ai
