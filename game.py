@@ -52,36 +52,39 @@ class Game:
         self.board_matrix[x][y] = fieldToWrite
 
         self.v_possible_moves.discard((x, y))
-        self.v_possible_moves.discard((x, y-1))
+        #self.v_possible_moves.discard((x - 1, y))
 
         self.h_possible_moves.discard((x, y))
-        self.h_possible_moves.discard((x-1, y))
+        #self.h_possible_moves.discard((x, y - 1))
 
-        if self.v_players_turn:  # vertical zauzima mesta (x, y) i (x, y+1)
-            self.board_matrix[x][y+1] = fieldToWrite
-
-            # vertikali sam sebi blokira jos jedno polje
-            # # b #
-            # #[b]#
-            # #[b]#
-            self.v_possible_moves.discard((x, y+1))
+        if self.v_players_turn:  # vertical zauzima mesta (x, y) i (x+1, y)
+            self.board_matrix[x+1][y] = fieldToWrite
 
             # horizontalnom blokira 2 polja
             # # # #
             # b[b]#
             # b[b]#
-            self.h_possible_moves.discard((x-1, y+1))
-            self.h_possible_moves.discard((x, y+1))
+            self.h_possible_moves.discard((x, y-1))
+            self.h_possible_moves.discard((x + 1, y-1))
+            self.h_possible_moves.discard((x, y + 1))
+            # vertikali sam sebi blokira jos jedno polje
+            # # b #
+            # #[b]#
+            # #[b]#
+            self.v_possible_moves.discard((x + 1, y))
+            self.v_possible_moves.discard((x - 1, y))
 
-        else:  # horizontal zauzima mesta (x, y) i (x+1, y)
-            self.board_matrix[x+1][y] = fieldToWrite
+        else:  # horizontal zauzima mesta (x, y) i (x, y + 1)
+            self.board_matrix[x][y + 1] = fieldToWrite
 
-            # vertikalnom blokira jos 2 polja (polja iznad)
-            self.v_possible_moves.discard((x+1, y))
-            self.v_possible_moves.discard((x+1, y-1))
+            # vertikalnom blokira jos 3 polja 
+            self.h_possible_moves.discard((x - 1, y + 1))
+            self.v_possible_moves.discard((x - 1, y + 1))
+            self.v_possible_moves.discard((x, y + 1))
 
-            # horizontalni samom sebi blokira jos jedno polje
-            self.h_possible_moves.discard((x+1, y))
+            # horizontalni samom sebi blokira jos dva polja
+            self.h_possible_moves.discard((x, y + 1))
+            self.h_possible_moves.discard((x, y - 1))
 
         self.v_players_turn = not self.v_players_turn
         return
@@ -97,7 +100,8 @@ class Game:
 
     # mora da bude O(1)
     def game_over(self) -> bool:
-        return len(self.v_possible_moves) == 0 or len(self.h_possible_moves) == 0
+        return (len(self.v_possible_moves) == 0 and self.v_players_turn) or (
+            len(self.h_possible_moves) == 0 and not self.v_players_turn)
 
     def __str__(self):
         output_str = ""
