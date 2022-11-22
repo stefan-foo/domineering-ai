@@ -1,185 +1,87 @@
 from enum import Enum
-from typing import Tuple
+from functools import reduce
+from typing import NamedTuple
 
 
-class Field(Enum):
+class Player(Enum):
+    VERTICAL = 0,
+    HORIZONTAL = 1
+
+
+class Square(Enum):
     EMPTY = 1
     VERTICAL = 2
     HORIZONTAL = 3
 
 
-v_effects_to_h = ((0, 0), (1, 0), (1, -1), (0, -1))
-v_effects_to_v = ((0, 0), (1, 0), (-1, 0))
-
-h_effects_to_h = ((0, 0), (0, 1), (0, -1))
-h_effects_to_v = ((0, 0), (0, 1), (-1, 0), (-1, 1))
+class State(NamedTuple):
+    board: list[list[Square]]
+    to_move: Player
 
 
-class Game:
-    def __init__(self, n: int = 8, m: int = 8) -> None:
-        self.n: int = n  # broj vrsta
-        self.m: int = m  # broj kolona
-        self.v_players_turn: bool = True
-
-        self.v_possible_moves: set[Tuple[int, int]] = set()
-        self.h_possible_moves: set[Tuple[int, int]] = set()
-
-        for i in range(n-1):
-            for j in range(m):
-                self.v_possible_moves.add((i, j))
-        for i in range(n):
-            for j in range(m-1):
-                self.h_possible_moves.add((i, j))
-
-        self.h_moves_within_bounds = self.h_possible_moves.copy()
-        self.v_moves_within_bounds = self.v_possible_moves.copy()
-
-        self.board_matrix = [[Field.EMPTY for _ in range(m)] for _ in range(n)]
-        self.move_history: list[tuple[int, int]] = []
-
-    def ai_turn(self) -> None:
-        # pozvati minimax
-        # x, y = minimax(...)
-        # self.place(x, y)
-
-        return
-
-    def evaluate(self) -> float:
-        if (self.game_over()):
-            return -100 if self.v_players_turn else 100
-        return len(self.v_possible_moves) / len(self.h_possible_moves)
-
-    def player_turn(self, x: int, y: int) -> None:
-        self.do_move(x, y)
-        return
-
-    def do_move(self, x: int, y: int) -> None:
-        if not self.valid_move(x, y):
-            return
-
-        fieldToWrite: Field = Field.VERTICAL if self.v_players_turn else Field.HORIZONTAL
-
-        self.board_matrix[x][y] = fieldToWrite
-
-        self.v_possible_moves.discard((x, y))
-        self.h_possible_moves.discard((x, y))
-
-        if self.v_players_turn:  # vertical zauzima mesta (x, y) i (x+1, y)
-            self.board_matrix[x+1][y] = fieldToWrite
-
-            # horizontalnom blokira 2 polja
-            # # # #
-            # b[b]#
-            # b[b]#
-            self.h_possible_moves.discard((x + 1, y))
-            self.h_possible_moves.discard((x, y - 1))
-            self.h_possible_moves.discard((x + 1, y - 1))
-            # vertikali sam sebi blokira jos jedno polje
-            # # b #
-            # #[b]#
-            # #[b]#
-            self.v_possible_moves.discard((x + 1, y))
-            self.v_possible_moves.discard((x - 1, y))
-
-        else:  # horizontal zauzima mesta (x, y) i (x, y + 1)
-            self.board_matrix[x][y + 1] = fieldToWrite
-
-            # vertikalnom blokira jos 3 polja
-            self.v_possible_moves.discard((x - 1, y))
-            self.v_possible_moves.discard((x, y + 1))
-            self.v_possible_moves.discard((x - 1, y + 1))
-
-            # horizontalni samom sebi blokira jos dva polja
-            self.h_possible_moves.discard((x, y + 1))
-            self.h_possible_moves.discard((x, y - 1))
-
-        self.v_players_turn = not self.v_players_turn
-        self.move_history.append((x, y))
-        return
-
-    def undo_move(self) -> None:
-        if len(self.move_history) == 0:
-            return
-
-        *self.move_history, (x, y) = self.move_history
-        # vraca se potez
-        self.v_players_turn = not self.v_players_turn
-
-        self.board_matrix[x][y] = Field.EMPTY
-        if self.v_players_turn:
-            self.board_matrix[x+1][y] = Field.EMPTY
-            effects_to_v = v_effects_to_v
-            effects_to_h = v_effects_to_h
-        else:
-            self.board_matrix[x][y + 1] = Field.EMPTY
-            effects_to_v = h_effects_to_v
-            effects_to_h = h_effects_to_h
-
-        for cx, cy in effects_to_h:
-            px, py = x + cx, y + cy
-            if (px, py) in self.h_moves_within_bounds and self.board_matrix[px][py] is Field.EMPTY:
-                self.h_possible_moves.add((px, py))
-
-        for cx, cy in effects_to_v:
-            px, py = x + cx, y + cy
-            if (px, py) in self.v_moves_within_bounds and self.board_matrix[px][py] is Field.EMPTY:
-                self.v_possible_moves.add((px, py))
-
-    def valid_move(self, x: int, y: int) -> bool:
-        if self.v_players_turn:
-            return (x, y) in self.v_possible_moves
-        else:
-            return (x, y) in self.h_possible_moves
-
-    def move_within_bounds(self, x: int, y: int) -> bool:
-        if self.v_players_turn:
-            return (x, y) in self.v_moves_within_bounds
-        else:
-            return (x, y) in self.h_moves_within_bounds
-
-    # mora da bude O(1)
-    def game_over(self) -> bool:
-        return (len(self.v_possible_moves) == 0 and self.v_players_turn) or (
-            len(self.h_possible_moves) == 0 and not self.v_players_turn)
-
-    def __str__(self):
-        output_str = ""
-        for i in range(self.n):
-            for j in range(self.m):
-                match self.board_matrix[i][j]:
-                    case Field.EMPTY:
-                        output_str += "[ ]"
-                    case Field.VERTICAL:
-                        output_str += "[*]"
-                    case Field.HORIZONTAL:
-                        output_str += "[x]"
-            output_str += "\n"
-        return output_str
+def get_initial_state(n: int = 8, m: int = 8):
+    if n < 1 or m < 1:
+        raise Exception("Invalid board dimensions")
+    return State(board=[[Square.EMPTY for _ in range(m)] for _ in range(n)], to_move=Player.VERTICAL)
 
 
-game: Game = Game()
-print("initial", len(game.h_possible_moves))
+def get_move_coords(move: tuple[int, str]) -> tuple[int, int]:
+    (x, y_c) = move
+    return (x - 1, ord(str.upper(y_c)) - 65)
 
-game.do_move(1, 1)
-print(1, 1, len(game.h_possible_moves))
-print(game)
 
-game.do_move(6, 1)
-print(6, 1, len(game.h_possible_moves))
-print(game)
+def is_valid_move(state: State, move: tuple[int, str]) -> bool:
+    board, to_move = state
+    x, y = get_move_coords(move)
+    n = len(board)
+    m = len(board[0])
 
-game.do_move(6, 4)
-print(6, 4, len(game.h_possible_moves))
-print(game)
+    if x < 0 or y < 0 or board[x][y] is not Square.EMPTY:
+        return False
+    elif to_move is Player.HORIZONTAL:
+        return y + 1 < m and x < n and board[x][y + 1] is Square.EMPTY
+    else:
+        return x + 1 < n and y < m and board[x + 1][y] is Square.EMPTY
 
-game.undo_move()
-print("undo", 6, 4, len(game.h_possible_moves))
-print(game)
 
-game.undo_move()
-print("undo", 6, 1, len(game.h_possible_moves))
-print(game)
+def derive_state(state: State, move: tuple[int, str]) -> State:
+    if not is_valid_move(state, move):
+        raise Exception("Invalid move")
+    board, to_move = state
+    x, y = get_move_coords(move)
+    new_board = [row[:] for row in board]
 
-game.undo_move()
-print("undo", 1, 1, len(game.h_possible_moves))
-print(game)
+    if to_move is Player.HORIZONTAL:
+        new_board[x][y] = Square.HORIZONTAL
+        new_board[x][y + 1] = Square.HORIZONTAL
+    else:
+        new_board[x][y] = Square.VERTICAL
+        new_board[x + 1][y] = Square.VERTICAL
+
+    new_to_move = Player.HORIZONTAL if to_move is Player.VERTICAL else Player.VERTICAL
+    return State(board=new_board, to_move=new_to_move)
+
+
+def print_state(state: State) -> None:
+    (board, to_move) = state
+    n = len(board)
+    m = len(board[0])
+    output_arr = []
+
+    for i in range(n):
+        for j in range(m):
+            match board[i][j]:
+                case Square.EMPTY:
+                    output_arr.append("[ ]")
+                case Square.VERTICAL:
+                    output_arr.append("[*]")
+                case Square.HORIZONTAL:
+                    output_arr.append("[x]")
+        output_arr.append("\n")
+    print(str.join("", output_arr))
+
+
+game_state = get_initial_state(8, 8)
+print(is_valid_move(game_state, (5, 'A')))
+move1 = derive_state(game_state, (5, 'A'))
+print_state(move1)
