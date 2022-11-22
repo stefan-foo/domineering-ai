@@ -1,11 +1,14 @@
 from enum import Enum
 from functools import reduce
 from typing import NamedTuple
+import re
+
+move_matcher = re.compile(r'\[?(?P<xcord>\d+)(?:[, ])+(?P<ycord>[a-zA-Z])\]?')
 
 
 class Player(Enum):
-    VERTICAL = 0,
-    HORIZONTAL = 1
+    VERTICAL = True,
+    HORIZONTAL = False
 
 
 class Square(Enum):
@@ -28,6 +31,11 @@ def get_initial_state(n: int = 8, m: int = 8):
 def get_move_coords(move: tuple[int, str]) -> tuple[int, int]:
     (x, y_c) = move
     return (x - 1, ord(str.upper(y_c)) - 65)
+
+
+def try_parse_move(move: str) -> None | tuple[int, str]:
+    result = move_matcher.search(move)
+    return (int(result.group('xcord')), result.group('ycord')) if result else None
 
 
 def is_valid_move(state: State, move: tuple[int, str]) -> bool:
@@ -92,6 +100,11 @@ def print_state(state: State) -> None:
 
 
 game_state = get_initial_state(8, 8)
-print(is_valid_move(game_state, (5, 'A')))
-move1 = derive_state(game_state, (5, 'A'))
-print_state(move1)
+while not is_game_over(game_state):
+    move = input(
+        f"[{'VERTICAL' if game_state.to_move is Player.VERTICAL else 'HORIZONTAL'}] enter move: ")
+    move = try_parse_move(move)
+    if move and is_valid_move(game_state, move):
+        game_state = derive_state(game_state, move)
+    print_state(game_state)
+print(f"{'VERTICAL' if game_state.to_move is Player.HORIZONTAL else 'HORIZONTAL'} WON")
