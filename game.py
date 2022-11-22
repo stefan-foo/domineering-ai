@@ -9,9 +9,9 @@ class Player(Enum):
 
 
 class Square(Enum):
-    EMPTY = 1
-    VERTICAL = 2
-    HORIZONTAL = 3
+    EMPTY = ' '
+    VERTICAL = 'x'
+    HORIZONTAL = '*'
 
 
 class State(NamedTuple):
@@ -70,13 +70,7 @@ def print_state(state: State) -> None:
 
     for i in range(n):
         for j in range(m):
-            match board[i][j]:
-                case Square.EMPTY:
-                    output_arr.append("[ ]")
-                case Square.VERTICAL:
-                    output_arr.append("[*]")
-                case Square.HORIZONTAL:
-                    output_arr.append("[x]")
+            output_arr.append(f"[{board[i][j].value}]")
         output_arr.append("\n")
     print(str.join("", output_arr))
 
