@@ -1,5 +1,4 @@
 from enum import Enum
-from functools import reduce
 from typing import NamedTuple
 import re
 
@@ -33,7 +32,7 @@ def get_move_coords(move: tuple[int, str]) -> tuple[int, int]:
     return (x - 1, ord(str.upper(y_c)) - 65)
 
 
-def try_parse_move(move: str) -> None | tuple[int, str]:
+def parse_move(move: str) -> None | tuple[int, str]:
     result = move_matcher.search(move)
     return (int(result.group('xcord')), result.group('ycord')) if result else None
 
@@ -44,12 +43,12 @@ def is_valid_move(state: State, move: tuple[int, str]) -> bool:
     n = len(board)
     m = len(board[0])
 
-    if x < 0 or y < 0 or board[x][y] is not Square.EMPTY:
+    if x < 0 or y < 0:
         return False
     elif to_move is Player.HORIZONTAL:
-        return y + 1 < m and x < n and board[x][y + 1] is Square.EMPTY
+        return y + 1 < m and x < n and board[x][y] is Square.EMPTY and board[x][y + 1] is Square.EMPTY
     else:
-        return x + 1 < n and y < m and board[x + 1][y] is Square.EMPTY
+        return x + 1 < n and y < m and board[x][y] is Square.EMPTY and board[x + 1][y] is Square.EMPTY
 
 
 def is_game_over(state: State) -> bool:
@@ -70,9 +69,9 @@ def is_game_over(state: State) -> bool:
     return True
 
 
-def derive_state(state: State, move: tuple[int, str]) -> State:
+def derive_state(state: State, move: tuple[int, str]) -> None | State:
     if not is_valid_move(state, move):
-        raise Exception("Invalid move")
+        return None
     board, to_move = state
     x, y = get_move_coords(move)
     new_board = [row[:] for row in board]
@@ -92,19 +91,25 @@ def print_state(state: State) -> None:
     m = len(board[0])
     output_arr = []
 
+    output_arr.append("   A")
+    output_arr.extend([f"  {chr(65 + x) }" for x in range(1, m)])
+    output_arr.append("\n")
     for i in range(n):
+        output_arr.append(f"{i + 1} ")
         for j in range(m):
             output_arr.append(f"[{board[i][j].value}]")
         output_arr.append("\n")
     print(str.join("", output_arr))
 
 
-game_state = get_initial_state(8, 8)
+game_state: State = get_initial_state(4, 4)
 while not is_game_over(game_state):
     move = input(
         f"[{'VERTICAL' if game_state.to_move is Player.VERTICAL else 'HORIZONTAL'}] enter move: ")
-    move = try_parse_move(move)
-    if move and is_valid_move(game_state, move):
-        game_state = derive_state(game_state, move)
-    print_state(game_state)
+    move = parse_move(move)
+    if move:
+        game_state = derive_state(game_state, move) or game_state
+        print_state(game_state)
+    else:
+        print("Invalid move")
 print(f"{'VERTICAL' if game_state.to_move is Player.HORIZONTAL else 'HORIZONTAL'} WON")
