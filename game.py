@@ -27,7 +27,7 @@ def get_initial_state(n: int = 8, m: int = 8):
 
 def get_move_coords(move: tuple[int, str]) -> tuple[int, int]:
     (x, y_c) = move
-    return (x - 1, ord(str.upper(y_c)) - 65)
+    return (x - 1, ord(str.upper(y_c)) - ord('A'))
 
 
 def is_valid_move(state: State, move: tuple[int, str]) -> bool:
