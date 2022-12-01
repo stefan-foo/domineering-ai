@@ -1,5 +1,6 @@
+from copy import deepcopy
 from enum import Enum
-from typing import NamedTuple
+from typing import Iterable, NamedTuple
 import re
 
 move_matcher = re.compile(r'\[?(?P<xcord>\d+)(?:[, ])+(?P<ycord>[a-zA-Z])\]?')
@@ -27,19 +28,19 @@ def get_initial_state(n: int = 8, m: int = 8):
     return State(board=[[Square.EMPTY for _ in range(m)] for _ in range(n)], to_move=Player.VERTICAL)
 
 
-def get_move_coords(move: tuple[int, str]) -> tuple[int, int]:
-    (x, y_c) = move
-    return (x - 1, ord(str.upper(y_c)) - ord('A'))
+# def get_move_coords(move: tuple[int, str]) -> tuple[int, int]:
+#     (x, y_c) = move
+#     return (x - 1, ord(str.upper(y_c)) - ord('A'))
 
 
-def parse_move(move: str) -> None | tuple[int, str]:
+def parse_move(move: str) -> None | tuple[int, int]:
     result = move_matcher.search(move)
-    return (int(result.group('xcord')), result.group('ycord')) if result else None
+    return (int(result.group('xcord')) - 1, int(ord(result.group('ycord'))) - ord('A')) if result else None
 
 
-def is_valid_move(state: State, move: tuple[int, str]) -> bool:
+def is_valid_move(state: State, move: tuple[int, int]) -> bool:
     board, to_move = state
-    x, y = get_move_coords(move)
+    x, y = move
     n = len(board)
     m = len(board[0])
 
@@ -69,12 +70,12 @@ def is_game_over(state: State) -> bool:
     return True
 
 
-def derive_state(state: State, move: tuple[int, str]) -> None | State:
+def derive_state(state: State, move: tuple[int, int]) -> None | State:
     if not is_valid_move(state, move):
         return None
     board, to_move = state
-    x, y = get_move_coords(move)
-    new_board = [row[:] for row in board]
+    x, y = move
+    new_board = deepcopy(board)
 
     if to_move is Player.HORIZONTAL:
         new_board[x][y] = new_board[x][y+1] = Square.HORIZONTAL
@@ -85,14 +86,27 @@ def derive_state(state: State, move: tuple[int, str]) -> None | State:
     return State(board=new_board, to_move=new_to_move)
 
 
+def generate_children(state: State) -> Iterable[State]:
+    n = len(state)
+    m = len(state[0])
+
+    x_limit = n if state.to_move is Player.HORIZONTAL else n-1
+    y_limit = m if state.to_move is Player.VERTICAL else m-1
+    for x in range(x_limit):
+        for y in range(y_limit):
+            new_state = derive_state(state, (x, y))
+            if new_state is not None:
+                yield new_state
+
+
 def print_state(state: State) -> None:
     (board, to_move) = state
     n = len(board)
     m = len(board[0])
-    output_arr = []
+    output_arr = list[str]()
 
     output_arr.append("   A")
-    output_arr.extend([f"  {chr(65 + x)}" for x in range(1, m)])
+    output_arr.extend([f"  {chr(ord('A') + x)}" for x in range(1, m)])
     output_arr.append("\n")
     for i in range(n):
         output_arr.append(f"{i + 1} ")
