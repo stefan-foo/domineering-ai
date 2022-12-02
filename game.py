@@ -9,7 +9,8 @@ import math
 
 # region Faza I
 
-move_matcher = re.compile(r'\[?(?P<xcord>\d+)(?:[, ])+(?P<ycord>[a-zA-Z])\]?')
+move_matcher = re.compile(
+    r'\[?(?P<xcord>\d+)(?:[, ])*(?P<ycord>[a-zA-Z])\]?')
 
 
 class Player(Enum):
@@ -73,18 +74,13 @@ def create_initial_state(n: int = 8, m: int = 8, initial_to_move=Player.VERTICAL
 
 def parse_move(move: str) -> None | Move:
     result = move_matcher.search(move)
-    return (int(result.group('xcord'))-1, int(ord(result.group('ycord')))-ord('A')) if result else None
+    return (
+        int(result.group('xcord'))-1,
+        int(ord(result.group('ycord').upper()))-ord('A')) if result else None
 
 
 def is_valid_move(state: State, move: Move) -> bool:
-    x, y = move
-
-    if x < 0 or y < 0:
-        return False
-    elif state.to_move is Player.HORIZONTAL:
-        return (x, y) in state.h_possible_moves
-    else:
-        return (x, y) in state.v_possible_moves
+    return move in (state.h_possible_moves if state.to_move is Player.HORIZONTAL else state.v_possible_moves)
 
 
 def is_game_over(state: State) -> bool:
@@ -119,7 +115,6 @@ def derive_state(state: State, move: Move) -> None | State:
         effects_to_v = V_EFFECTS_TO_V
         effects_to_h = V_EFFECTS_TO_H
 
-        """Dodaje se odigrani potez i brise iz skupa mogucih poteza."""
         v_played_moves_copy.add((x, y))
 
         new_to_move = Player.HORIZONTAL
@@ -141,9 +136,14 @@ def derive_state(state: State, move: Move) -> None | State:
         if (x + cx, y + cy) in v_possible_moves_copy:
             v_possible_moves_copy.discard((px, py))
 
-    return State(state.n, state.m, v_played_moves=v_played_moves_copy, h_played_moves=h_played_moves_copy,
-                 v_possible_moves=v_possible_moves_copy, h_possible_moves=h_possible_moves_copy,
-                 to_move=new_to_move)
+    return State(
+        n=state.n,
+        m=state.m,
+        v_played_moves=v_played_moves_copy,
+        h_played_moves=h_played_moves_copy,
+        v_possible_moves=v_possible_moves_copy,
+        h_possible_moves=h_possible_moves_copy,
+        to_move=new_to_move)
 
 
 def generate_children(state: State) -> Iterable[State]:
@@ -159,8 +159,7 @@ def generate_children(state: State) -> Iterable[State]:
 
 
 def print_state(state: State) -> None:
-    n = state.n
-    m = state.m
+    (n, m, *_) = state
     output_arr = list[str]()
 
     output_arr.append("   A")
@@ -175,14 +174,17 @@ def print_state(state: State) -> None:
                 square = Square.VERTICAL
             if (i, j-1) in state.h_played_moves:
                 square = Square.HORIZONTAL
-
             if (i, j) in state.h_played_moves:
                 square = Square.HORIZONTAL
             if (i, j) in state.v_played_moves:
                 square = Square.VERTICAL
 
             output_arr.append(f"{square.value}")
+        output_arr.append(f" {i+1}")
         output_arr.append("\n")
+    output_arr.append("   A")
+    output_arr.extend([f"  {chr(ord('A')+x)}" for x in range(1, m)])
+    output_arr.append("\n")
     print(str.join("", output_arr), flush=True)
 
     print(Style.RESET_ALL)
@@ -211,39 +213,39 @@ def input_move(to_move: Player) -> Move | None:
 # region Faza III
 
 
-def derive_safe_moves(state: State) -> tuple[set[Move], set[Move]]:
-    v_safe_moves = {
+def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
+    v_isolated_moves = {
         (x, y) for (x, y) in state.v_possible_moves
         if (x, y) not in state.h_possible_moves
         and (x+1, y) not in state.h_possible_moves
         and (x, y-1) not in state.h_possible_moves
         and (x+1, y-1) not in state.h_possible_moves}
 
-    h_safe_moves = {
+    h_isolated_moves = {
         (x, y) for (x, y) in state.h_possible_moves
         if (x, y) not in state.v_possible_moves
         and (x, y+1) not in state.v_possible_moves
         and (x-1, y) not in state.v_possible_moves
         and (x-1, y+1) not in state.v_possible_moves}
 
-    return (v_safe_moves, h_safe_moves)
+    return (v_isolated_moves, h_isolated_moves)
 
 
 def evaluate_state(state: State) -> int:
-    if (is_game_over(state)):
+    if is_game_over(state):
         return 100 if state.to_move is Player.HORIZONTAL else -100
 
-    (v_safe_moves, h_safe_moves) = derive_safe_moves(state)
-    return (len(state.v_possible_moves) + len(v_safe_moves)) - (len(state.h_possible_moves) + len(h_safe_moves))
+    (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
+    return len(state.v_possible_moves) + len(v_safe_moves) - (len(state.h_possible_moves) + len(h_safe_moves))
 
 
 # @lru_cache(maxsize=256)
 def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move | None, int]:
-    if depth == 0 or is_game_over(state):  # O(1)
-        return ((-1, -1), evaluate_state(state))  # najskuplja operacija
+    if depth == 0 or is_game_over(state):
+        return ((-1, -1), evaluate_state(state))
 
     if state.to_move is Player.VERTICAL:
-        best_move = (None, -101)
+        best_move = (None, -1001)
         for move in state.v_possible_moves:
             child_state = derive_state(state, move)
             if (child_state):
@@ -254,7 +256,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move 
                 if alpha >= beta:
                     break
     else:
-        best_move = (None, 101)
+        best_move = (None, 1001)
         for move in state.h_possible_moves:
             child_state = derive_state(state, move)
             if (child_state):
@@ -301,8 +303,14 @@ def game_loop() -> None:
         n, m = 8, 8
 
     game_state: State = create_initial_state(n, m)
+
+    last_move = None
+    eval = 0
     while not is_game_over(game_state):
         print_state(game_state)
+        if last_move:
+            print(
+                f"\nMove played: {(last_move[0] + 1, chr(ord('A') + last_move[1]))} [{eval}]\n")
         if not TESTING:
             move = input_move(game_state.to_move)
             if move:
@@ -315,25 +323,18 @@ def game_loop() -> None:
                 print("Enter move in format ROW COLUMN")
         else:  # if TESTING
             if (game_state.to_move is Player.VERTICAL):
-                move, _ = alfabeta(game_state, 4, -math.inf, math.inf)
-
-                if move is not None:
-                    new_game_state = derive_state(game_state, move)
-                    # nice
-                    print(
-                        f"Played move: {(move[0], int(ord('A')) + move[1])}")
-                else:
-                    break
-                if new_game_state is not None:
-                    game_state = new_game_state
+                move, eval = alfabeta(game_state, 4, -math.inf, math.inf)
             else:
-                move = input_move(game_state.to_move)
-                if move:
-                    new_game_state = derive_state(game_state, move)
-                    if new_game_state:
-                        game_state = new_game_state
-                    else:
-                        print("Invalid move")
+                move, eval = alfabeta(game_state, 4, -math.inf, math.inf)
+                # move = input_move(game_state.to_move)
+
+            last_move = move
+            if move:
+                new_game_state = derive_state(game_state, move)
+            else:
+                break
+            if new_game_state is not None:
+                game_state = new_game_state
 
     last_state = game_state
     alfabeta(last_state, 4, -math.inf, math.inf)
