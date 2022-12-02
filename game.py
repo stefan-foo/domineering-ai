@@ -84,8 +84,8 @@ def is_valid_move(state: State, move: Move) -> bool:
 
 
 def is_game_over(state: State) -> bool:
-    return (len(state.v_possible_moves) == 0 and state.to_move == Player.VERTICAL) or (
-        len(state.h_possible_moves) == 0 and state.to_move == Player.HORIZONTAL)
+    return (len(state.v_possible_moves) == 0 and state.to_move == Player.VERTICAL) \
+        or (len(state.h_possible_moves) == 0 and state.to_move == Player.HORIZONTAL)
 
 # endregion Faza I
 
@@ -117,24 +117,19 @@ def derive_state(state: State, move: Move) -> None | State:
 
         v_played_moves_copy.add((x, y))
 
-        new_to_move = Player.HORIZONTAL
+        next_to_move = Player.HORIZONTAL
     else:
         effects_to_v = H_EFFECTS_TO_V
         effects_to_h = H_EFFECTS_TO_H
 
         h_played_moves_copy.add((x, y))
 
-        new_to_move = Player.VERTICAL
+        next_to_move = Player.VERTICAL
 
     for cx, cy in effects_to_h:
-        px, py = x + cx, y + cy
-        if (px, py) in h_possible_moves_copy:
-            h_possible_moves_copy.discard((px, py))
-
+        h_possible_moves_copy.discard((x + cx, x + cy))
     for cx, cy in effects_to_v:
-        px, py = x + cx, y + cy
-        if (x + cx, y + cy) in v_possible_moves_copy:
-            v_possible_moves_copy.discard((px, py))
+        v_possible_moves_copy.discard((x + cx, y + cy))
 
     return State(
         n=state.n,
@@ -143,7 +138,7 @@ def derive_state(state: State, move: Move) -> None | State:
         h_played_moves=h_played_moves_copy,
         v_possible_moves=v_possible_moves_copy,
         h_possible_moves=h_possible_moves_copy,
-        to_move=new_to_move)
+        to_move=next_to_move)
 
 
 def generate_children(state: State) -> Iterable[State]:
