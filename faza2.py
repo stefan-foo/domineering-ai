@@ -2,11 +2,11 @@ from typing import Iterable
 from faza1 import *
 
 
-V_EFFECTS_TO_H = ((0, 0), (1, 0), (1, -1), (0, -1))
-V_EFFECTS_TO_V = ((0, 0), (1, 0), (-1, 0))
+V_EFFECTS_TO_H = ((0, 0), (-1, 0), (-1, -1), (0, -1))
+V_EFFECTS_TO_V = ((0, 0), (-1, 0), (1, 0))
 
 H_EFFECTS_TO_H = ((0, 0), (0, 1), (0, -1))
-H_EFFECTS_TO_V = ((0, 0), (0, 1), (-1, 0), (-1, 1))
+H_EFFECTS_TO_V = ((0, 0), (0, 1), (1, 0), (1, 1))
 
 
 def derive_state(state: State, move: Move) -> None | State:
@@ -37,7 +37,7 @@ def derive_state(state: State, move: Move) -> None | State:
         next_to_move = Turn.VERTICAL
 
     for cx, cy in effects_to_h:
-        h_possible_moves_copy.discard((x + cx, x + cy))
+        h_possible_moves_copy.discard((x + cx, y + cy))
     for cx, cy in effects_to_v:
         v_possible_moves_copy.discard((x + cx, y + cy))
 

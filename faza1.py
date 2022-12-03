@@ -82,7 +82,7 @@ def create_initial_state(n: int = 8, m: int = 8, initial_to_move: Turn = Turn.VE
         raise Exception("Invalid board dimensions")
 
     v_possible_moves: set[Move] = {
-        (i, j) for j in range(m) for i in range(n-1)
+        (i, j) for j in range(m) for i in range(1, n)
     }
     h_possible_moves: set[Move] = {
         (i, j) for j in range(m-1) for i in range(n)
@@ -127,12 +127,12 @@ def print_state(state: State) -> None:
         [f"  {chr(ord('A')+x)}" for x in range(0, m)] + ["\n"]
 
     output_arr.extend(row_output)
-    for i in range(n):
+    for i in range(n-1, -1, -1):
         output_arr.append(f" {i+1} ".rjust(5))
         for j in range(m):
             square = Square.EMPTY
 
-            if (i-1, j) in state.v_played_moves:
+            if (i+1, j) in state.v_played_moves:
                 square = Square.VERTICAL
             if (i, j-1) in state.h_played_moves:
                 square = Square.HORIZONTAL

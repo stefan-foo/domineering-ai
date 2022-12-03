@@ -91,9 +91,9 @@ def game_loop() -> None:
                 print("Enter move in format ROW COLUMN")
         else:  # if TESTING
             if (game_state.to_move is Turn.VERTICAL):
-                move, eval = alfabeta(game_state, 4, -math.inf, math.inf)
+                move, eval = alfabeta(game_state, 5, -math.inf, math.inf)
             else:
-                move, eval = alfabeta(game_state, 4, -math.inf, math.inf)
+                move, eval = alfabeta(game_state, 5, -math.inf, math.inf)
                 # move = input_move(game_state.to_move)
 
             last_move = move
