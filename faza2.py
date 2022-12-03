@@ -21,20 +21,20 @@ def derive_state(state: State, move: Move) -> None | State:
     v_played_moves_copy = state.v_played_moves.copy()
     h_played_moves_copy = state.h_played_moves.copy()
 
-    if state.to_move == Player.VERTICAL:
+    if state.to_move == Turn.VERTICAL:
         effects_to_v = V_EFFECTS_TO_V
         effects_to_h = V_EFFECTS_TO_H
 
         v_played_moves_copy.add((x, y))
 
-        next_to_move = Player.HORIZONTAL
+        next_to_move = Turn.HORIZONTAL
     else:
         effects_to_v = H_EFFECTS_TO_V
         effects_to_h = H_EFFECTS_TO_H
 
         h_played_moves_copy.add((x, y))
 
-        next_to_move = Player.VERTICAL
+        next_to_move = Turn.VERTICAL
 
     for cx, cy in effects_to_h:
         h_possible_moves_copy.discard((x + cx, x + cy))
@@ -52,7 +52,7 @@ def derive_state(state: State, move: Move) -> None | State:
 
 
 def generate_children(state: State) -> Iterable[State]:
-    possible_moves = state.v_possible_moves if state.to_move is Player.VERTICAL else state.h_possible_moves
+    possible_moves = state.v_possible_moves if state.to_move is Turn.VERTICAL else state.h_possible_moves
     for move in possible_moves:
         new_state = derive_state(state, move)
         if new_state is not None:

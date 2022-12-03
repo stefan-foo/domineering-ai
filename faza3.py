@@ -25,7 +25,7 @@ def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
 
 def evaluate_state(state: State) -> int:
     if is_game_over(state):
-        return 100 if state.to_move is Player.HORIZONTAL else -100
+        return 100 if state.to_move is Turn.HORIZONTAL else -100
 
     (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
     return len(state.v_possible_moves) + len(v_safe_moves) - (len(state.h_possible_moves) + len(h_safe_moves))
@@ -36,7 +36,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move 
     if depth == 0 or is_game_over(state):
         return ((-1, -1), evaluate_state(state))
 
-    if state.to_move is Player.VERTICAL:
+    if state.to_move is Turn.VERTICAL:
         best_move = (None, -1001)
         for move in state.v_possible_moves:
             child_state = derive_state(state, move)
@@ -90,7 +90,7 @@ def game_loop() -> None:
             else:
                 print("Enter move in format ROW COLUMN")
         else:  # if TESTING
-            if (game_state.to_move is Player.VERTICAL):
+            if (game_state.to_move is Turn.VERTICAL):
                 move, eval = alfabeta(game_state, 4, -math.inf, math.inf)
             else:
                 move, eval = alfabeta(game_state, 4, -math.inf, math.inf)
@@ -108,7 +108,7 @@ def game_loop() -> None:
     alfabeta(last_state, 4, -math.inf, math.inf)
     print_state(game_state)
     print(
-        f"{'VERTICAL' if game_state.to_move is Player.HORIZONTAL else 'HORIZONTAL'} WON")
+        f"{'VERTICAL' if game_state.to_move is Turn.HORIZONTAL else 'HORIZONTAL'} WON")
 
 
 game_loop()
