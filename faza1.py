@@ -123,12 +123,12 @@ def print_state(state: State) -> None:
     (n, m, *_) = state
     output_arr = list[str]()
 
-    row_output = ["    A"] + \
-        [f"  {chr(ord('A')+x)}" for x in range(1, m)] + ["\n"]
+    row_output = ["    ".rjust(1 if n > 0 else 0)] + \
+        [f"  {chr(ord('A')+x)}" for x in range(0, m)] + ["\n"]
 
     output_arr.extend(row_output)
     for i in range(n):
-        output_arr.append(f" {i+1} ")
+        output_arr.append(f" {i+1} ".rjust(5))
         for j in range(m):
             square = Square.EMPTY
 
