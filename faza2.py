@@ -52,8 +52,47 @@ def derive_state(state: State, move: Move) -> None | State:
 
 
 def generate_children(state: State) -> Iterable[State]:
-    possible_moves = state.v_possible_moves if state.to_move is Turn.VERTICAL else state.h_possible_moves
-    for move in possible_moves:
+    for move in possible_moves(state):
         new_state = derive_state(state, move)
         if new_state is not None:
             yield new_state
+
+
+def possible_moves(state: State) -> set[Move]:
+    return state.v_possible_moves if state.to_move is Turn.VERTICAL else state.h_possible_moves
+
+
+def input_valid_move(state: State) -> Move:
+    legal_move = None
+    while not legal_move:
+        move = input_move(state.to_move)
+        if move and is_valid_move(state, move):
+            legal_move = move
+        else:
+            print(Fore.RED + "Invalid move!" + Style.RESET_ALL)
+    return legal_move
+
+
+def game_loop() -> None:
+    n, m = input_board_dimensions()
+
+    # initial_turn = input_move_order()
+    # player1 = input_player_type()
+    # player2 = input_player_type()
+
+    state = create_initial_state(n, m)
+
+    while not is_game_over(state):
+        print_state(state)
+
+        move = input_valid_move(state)
+
+        new_state = derive_state(state, move)
+        if new_state:
+            state = new_state
+
+    print_state(state)
+
+
+if __name__ == "__main__":
+    game_loop()

@@ -177,18 +177,3 @@ def input_move_order() -> Turn:
         choice = int(input(
             f"First to move {Fore.BLUE}[VERTICAL]{Style.RESET_ALL} - 1 / {Fore.RED}[HORIZONTAL]{Style.RESET_ALL} - 2: "))
     return Turn.VERTICAL if choice == 1 else Turn.HORIZONTAL
-
-
-def game_loop() -> None:
-    n, m = input_board_dimensions()
-    initial_turn = input_move_order()
-    player1 = input_player_type()
-    player2 = input_player_type()
-
-    print_state(create_initial_state(n, m, initial_turn))
-
-    return None
-
-
-if __name__ == "__main__":
-    game_loop()
