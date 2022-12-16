@@ -51,7 +51,7 @@ def derive_state(state: State, move: Move) -> None | State:
         to_move=next_to_move)
 
 
-def generate_children(state: State) -> Iterable[State]:
+def generate_possible_states(state: State) -> Iterable[State]:
     for move in possible_moves(state):
         new_state = derive_state(state, move)
         if new_state is not None:
