@@ -92,7 +92,3 @@ def game_loop() -> None:
             state = new_state
 
     print_state(state)
-
-
-if __name__ == "__main__":
-    game_loop()
