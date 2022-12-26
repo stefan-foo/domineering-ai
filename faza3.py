@@ -1,5 +1,3 @@
-
-
 import math
 from faza1 import *
 from faza2 import *
@@ -9,16 +7,16 @@ def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
     v_isolated_moves = {
         (x, y) for (x, y) in state.v_possible_moves
         if (x, y) not in state.h_possible_moves
-        and (x+1, y) not in state.h_possible_moves
+        and (x-1, y) not in state.h_possible_moves
         and (x, y-1) not in state.h_possible_moves
-        and (x+1, y-1) not in state.h_possible_moves}
+        and (x-1, y-1) not in state.h_possible_moves}
 
     h_isolated_moves = {
         (x, y) for (x, y) in state.h_possible_moves
         if (x, y) not in state.v_possible_moves
         and (x, y+1) not in state.v_possible_moves
-        and (x-1, y) not in state.v_possible_moves
-        and (x-1, y+1) not in state.v_possible_moves}
+        and (x+1, y) not in state.v_possible_moves
+        and (x+1, y+1) not in state.v_possible_moves}
 
     return (v_isolated_moves, h_isolated_moves)
 
@@ -68,7 +66,7 @@ def game_loop() -> None:
     if not TESTING:
         n, m = input_board_dimensions()
     else:
-        n, m = 8, 8
+        n, m = 10, 10
 
     game_state: State = create_initial_state(n, m)
 
@@ -91,9 +89,9 @@ def game_loop() -> None:
                 print("Enter move in format ROW COLUMN")
         else:  # if TESTING
             if (game_state.to_move is Turn.VERTICAL):
-                move, eval = alfabeta(game_state, 5, -math.inf, math.inf)
+                move, eval = alfabeta(game_state, 2, -math.inf, math.inf)
             else:
-                move, eval = alfabeta(game_state, 5, -math.inf, math.inf)
+                move, eval = alfabeta(game_state, 2, -math.inf, math.inf)
                 # move = input_move(game_state.to_move)
 
             last_move = move
