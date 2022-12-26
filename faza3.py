@@ -81,8 +81,8 @@ def game_loop(n, m, player1, player2, initial_to_move) -> None:
         new_state = derive_state(game_state, move)
         if new_state:
             game_state = new_state
+            to_move, next_to_move = next_to_move, to_move
 
-        to_move, next_to_move = next_to_move, to_move
         print_state(game_state)
 
     print_state(game_state)
