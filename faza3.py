@@ -1,3 +1,4 @@
+from functools import lru_cache
 import math
 from faza1 import *
 from faza2 import derive_state, input_valid_move
@@ -27,6 +28,7 @@ def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
     return (v_isolated_moves, h_isolated_moves)
 
 
+# @lru_cache(maxsize=256)
 def evaluate_state(state: State) -> int:
     if is_game_over(state):
         return 100 if state.to_move is Turn.HORIZONTAL else -100
@@ -38,21 +40,20 @@ def evaluate_state(state: State) -> int:
 cache_hits = 0
 iterations = 0
 
-# @lru_cache(maxsize=256)
 
-
-def alfabeta(state: State, depth: int, alpha: float, beta: float, transposition_table: dict) -> tuple[Move, int]:
+def alfabeta(state: State, depth: int, alpha: float, beta: float, transposition_table: dict[State, int]) -> tuple[Move, int]:
     global iterations
     iterations += 1
 
-    if state in transposition_table:
-        global cache_hits
-        cache_hits += 1
-        return transposition_table[state]
-
     if depth == 0 or is_game_over(state):
-        value = evaluate_state(state)
-        return ((-1, -1), value)
+        if state in transposition_table:
+            global cache_hits
+            cache_hits += 1
+            return ((-1, -1), transposition_table[state])
+        else:
+            value = evaluate_state(state)
+            transposition_table[state] = value
+            return ((-1, -1), value)
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
@@ -79,7 +80,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, transposition_
                 if alpha >= beta:
                     break
 
-    transposition_table[state] = best_move
+    transposition_table[state] = best_move[1]
     return best_move
 
 
@@ -97,7 +98,7 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
     to_move, next_to_move = player1, player2
 
-    transposition_table = {}
+    transposition_table = dict[State, int]()
 
     print_state(game_state)
     while not is_game_over(game_state):
