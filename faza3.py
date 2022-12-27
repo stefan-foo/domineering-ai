@@ -32,7 +32,7 @@ def evaluate_state(state: State) -> int:
         return 100 if state.to_move is Turn.HORIZONTAL else -100
 
     (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
-    return 2*len(state.v_possible_moves) + len(v_safe_moves) - (2*len(state.h_possible_moves) + len(h_safe_moves))
+    return 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
 
 
 # @lru_cache(maxsize=256)
@@ -65,6 +65,12 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
     return best_move
 
 
+def dynamic_depth(state: State) -> int:
+    res = 1 / (len(state.h_possible_moves) + len(state.v_possible_moves)
+               ) * state.n * state.m + 8 - (state.n + state.m) / 4
+    return max(int(res), 3)
+
+
 DEPTH_TEST = 4
 
 
@@ -72,9 +78,13 @@ def game_loop(n, m, player1, player2, initial_to_move) -> None:
     game_state = create_initial_state(n, m, initial_to_move)
 
     to_move, next_to_move = player1, player2
+
+    print_state(game_state)
     while not is_game_over(game_state):
         if to_move == Player.AI:
-            move, eval = alfabeta(game_state, DEPTH_TEST, -math.inf, math.inf)
+            depth = dynamic_depth(game_state)
+            print(depth)
+            move, _ = alfabeta(game_state, depth, -math.inf, math.inf)
         else:
             move = input_valid_move(game_state)
 
@@ -85,8 +95,6 @@ def game_loop(n, m, player1, player2, initial_to_move) -> None:
 
         print_state(game_state)
 
-    print_state(game_state)
-
 
 if __name__ == "__main__":
-    game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
+    game_loop(8, 8, Player.AI, Player.HUMAN, Turn.VERTICAL)
