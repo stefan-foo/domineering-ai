@@ -1,6 +1,6 @@
 import math
 from faza1 import *
-from faza2 import *
+from faza2 import derive_state, input_valid_move
 
 
 class PlayingMode(Enum):
@@ -65,17 +65,17 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
     return best_move
 
 
+MIN_DEPTH_TEST = 4
+
+
 def dynamic_depth(state: State) -> int:
     res = 1 / (len(state.h_possible_moves) + len(state.v_possible_moves)
                ) * state.n * state.m + 8 - (state.n + state.m) / 4
-    return max(int(res), 3)
+    return max(int(res), MIN_DEPTH_TEST)
 
 
-DEPTH_TEST = 4
-
-
-def game_loop(n, m, player1, player2, initial_to_move) -> None:
-    game_state = create_initial_state(n, m, initial_to_move)
+def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: Turn) -> None:
+    game_state = create_initial_state(n, m, first_to_move)
 
     to_move, next_to_move = player1, player2
 
@@ -97,4 +97,4 @@ def game_loop(n, m, player1, player2, initial_to_move) -> None:
 
 
 if __name__ == "__main__":
-    game_loop(8, 8, Player.AI, Player.HUMAN, Turn.VERTICAL)
+    game_loop(10, 10, Player.AI, Player.AI, Turn.VERTICAL)
