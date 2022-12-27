@@ -15,11 +15,11 @@ def derive_state(state: State, move: Move) -> None | State:
 
     (x, y) = move
 
-    v_possible_moves_copy = state.v_possible_moves.copy()
-    h_possible_moves_copy = state.h_possible_moves.copy()
+    v_possible_moves_copy = set(state.v_possible_moves)
+    h_possible_moves_copy = set(state.h_possible_moves)
 
-    v_played_moves_copy = state.v_played_moves.copy()
-    h_played_moves_copy = state.h_played_moves.copy()
+    v_played_moves_copy = set(state.v_played_moves)
+    h_played_moves_copy = set(state.h_played_moves)
 
     if state.to_move == Turn.VERTICAL:
         effects_to_v = V_EFFECTS_TO_V
@@ -44,10 +44,10 @@ def derive_state(state: State, move: Move) -> None | State:
     return State(
         n=state.n,
         m=state.m,
-        v_played_moves=v_played_moves_copy,
-        h_played_moves=h_played_moves_copy,
-        v_possible_moves=v_possible_moves_copy,
-        h_possible_moves=h_possible_moves_copy,
+        v_played_moves=frozenset(v_played_moves_copy),
+        h_played_moves=frozenset(h_played_moves_copy),
+        v_possible_moves=frozenset(v_possible_moves_copy),
+        h_possible_moves=frozenset(h_possible_moves_copy),
         to_move=next_to_move)
 
 
@@ -58,7 +58,7 @@ def generate_possible_states(state: State) -> Iterable[State]:
             yield new_state
 
 
-def possible_moves(state: State) -> set[Move]:
+def possible_moves(state: State) -> frozenset[Move]:
     return state.v_possible_moves if state.to_move is Turn.VERTICAL else state.h_possible_moves
 
 

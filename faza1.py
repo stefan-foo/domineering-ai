@@ -42,19 +42,19 @@ class State(NamedTuple):
     """
     Potezi koji su odigrani vertikalnom pločicom.
     """
-    v_played_moves: set[Move]
+    v_played_moves: frozenset[Move]
     """
     Potezi koji su odigrani horizontalnom pločicom.
     """
-    h_played_moves: set[Move]
+    h_played_moves: frozenset[Move]
     """
     Mogući sledeći potezi za vertikalnu pločicu.
     """
-    v_possible_moves: set[Move]
+    v_possible_moves: frozenset[Move]
     """
     Mogući sledeći potezi za horizontalnu pločicu.
     """
-    h_possible_moves: set[Move]
+    h_possible_moves: frozenset[Move]
     """
     Igrač čiji je sledeći potez.
     """
@@ -81,15 +81,15 @@ def create_initial_state(n: int = 8, m: int = 8, initial_to_move: Turn = Turn.VE
     if n < 1 or m < 1:
         raise Exception("Invalid board dimensions")
 
-    v_possible_moves: set[Move] = {
+    v_possible_moves: frozenset[Move] = frozenset({
         (i, j) for j in range(m) for i in range(1, n)
-    }
-    h_possible_moves: set[Move] = {
+    })
+    h_possible_moves: frozenset[Move] = frozenset({
         (i, j) for j in range(m-1) for i in range(n)
-    }
+    })
 
-    v_played_moves = set[Move]()
-    h_played_moves = set[Move]()
+    v_played_moves = frozenset[Move]()
+    h_played_moves = frozenset[Move]()
 
     return State(n, m,
                  v_played_moves, h_played_moves,
