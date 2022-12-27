@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Iterable
 from faza1 import *
 
@@ -8,7 +9,10 @@ V_EFFECTS_TO_V = ((0, 0), (-1, 0), (1, 0))
 H_EFFECTS_TO_H = ((0, 0), (0, 1), (0, -1))
 H_EFFECTS_TO_V = ((0, 0), (0, 1), (1, 0), (1, 1))
 
+LRU_CACHE_MAX = 16*1024  # Proces je maksimalno oko 250MB kod mene
 
+
+@lru_cache(maxsize=LRU_CACHE_MAX)
 def derive_state(state: State, move: Move) -> None | State:
     if not is_valid_move(state, move):
         return None

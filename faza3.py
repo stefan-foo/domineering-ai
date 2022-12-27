@@ -1,6 +1,7 @@
+from functools import lru_cache
 import math
 from faza1 import *
-from faza2 import derive_state, input_valid_move
+from faza2 import LRU_CACHE_MAX, derive_state, input_valid_move
 
 
 class PlayingMode(Enum):
@@ -9,6 +10,7 @@ class PlayingMode(Enum):
     AI_VS_AI = 2
 
 
+@lru_cache(maxsize=LRU_CACHE_MAX, typed=True)
 def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
     v_isolated_moves = {
         (x, y) for (x, y) in state.v_possible_moves
@@ -27,6 +29,7 @@ def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
     return (v_isolated_moves, h_isolated_moves)
 
 
+@lru_cache(maxsize=LRU_CACHE_MAX, typed=True)
 def evaluate_state(state: State) -> int:
     if is_game_over(state):
         return 100 if state.to_move is Turn.HORIZONTAL else -100
@@ -35,24 +38,10 @@ def evaluate_state(state: State) -> int:
     return 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
 
 
-cache_hits = 0
-iterations = 0
-
-# @lru_cache(maxsize=256)
-
-
-def alfabeta(state: State, depth: int, alpha: float, beta: float, transposition_table: dict) -> tuple[Move, int]:
-    global iterations
-    iterations += 1
-
-    if state in transposition_table:
-        global cache_hits
-        cache_hits += 1
-        return transposition_table[state]
-
+@lru_cache(maxsize=LRU_CACHE_MAX, typed=True)
+def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move, int]:
     if depth == 0 or is_game_over(state):
-        value = evaluate_state(state)
-        return ((-1, -1), value)
+        return ((-1, -1), evaluate_state(state))
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
@@ -60,7 +49,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, transposition_
             child_state = derive_state(state, move)
             if (child_state):
                 candidate = alfabeta(child_state, depth - 1,
-                                     alpha, beta, transposition_table)
+                                     alpha, beta)
                 if candidate[1] > best_move[1]:
                     best_move = (move, candidate[1])
                 alpha = max(alpha, best_move[1])
@@ -72,20 +61,20 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, transposition_
             child_state = derive_state(state, move)
             if (child_state):
                 (candidate) = alfabeta(child_state, depth -
-                                       1, alpha, beta, transposition_table)
+                                       1, alpha, beta)
                 if candidate[1] < best_move[1]:
                     best_move = (move, candidate[1])
                 beta = min(beta, best_move[1])
                 if alpha >= beta:
                     break
 
-    transposition_table[state] = best_move
     return best_move
 
 
 MIN_DEPTH = 4
 
 
+@lru_cache(maxsize=LRU_CACHE_MAX, typed=True)
 def dynamic_depth(state: State) -> int:
     res = 1 / (len(state.h_possible_moves) + len(state.v_possible_moves)
                ) * state.n * state.m + 8 - (state.n + state.m) / 4
@@ -97,15 +86,13 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
     to_move, next_to_move = player1, player2
 
-    transposition_table = {}
-
     print_state(game_state)
     while not is_game_over(game_state):
         if to_move == Player.AI:
             depth = dynamic_depth(game_state)
             print(depth)
             move, _ = alfabeta(game_state, depth, -math.inf,
-                               math.inf, transposition_table)
+                               math.inf)
         else:
             move = input_valid_move(game_state)
 
@@ -115,10 +102,10 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
             to_move, next_to_move = next_to_move, to_move
 
         print_state(game_state)
-        global cache_hits
-        global iterations
-        print("Cache hits / iterations: ", cache_hits, " / ",
-              iterations, " (" + str(int(cache_hits/iterations*100)) + "%)")
+        print("alfabeta ", alfabeta.cache_info())
+        print("evaluate_state ", evaluate_state.cache_info())
+        print("derive_state ", derive_state.cache_info())
+        # postoji i .cache_clear() kao je potrebno
 
 
 if __name__ == "__main__":
