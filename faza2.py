@@ -9,11 +9,8 @@ V_EFFECTS_TO_V = ((0, 0), (-1, 0), (1, 0))
 H_EFFECTS_TO_H = ((0, 0), (0, 1), (0, -1))
 H_EFFECTS_TO_V = ((0, 0), (0, 1), (1, 0), (1, 1))
 
-LRU_CACHE_MAX = 16*1024  # Proces je maksimalno oko 250MB kod mene
 
-
-@lru_cache(maxsize=LRU_CACHE_MAX)
-def derive_state(state: State, move: Move) -> None | State:
+def derive_state(state: State, move: Move) -> State | None:
     if not is_valid_move(state, move):
         return None
 
@@ -55,11 +52,11 @@ def derive_state(state: State, move: Move) -> None | State:
         to_move=next_to_move)
 
 
-def generate_possible_states(state: State) -> Iterable[State]:
+def generate_possible_states(state: State) -> Iterable[tuple[State, Move]]:
     for move in possible_moves(state):
         new_state = derive_state(state, move)
         if new_state is not None:
-            yield new_state
+            yield (new_state, move)
 
 
 def possible_moves(state: State) -> frozenset[Move]:
