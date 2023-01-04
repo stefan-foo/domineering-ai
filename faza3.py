@@ -39,8 +39,6 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
         best_move = ((-1, -1), -1001)
         for move in set(state.v_possible_moves):
             child_state = modify_state(state, move)
-            # print("play", len(state.v_possible_moves),
-            #       len(state.h_possible_moves))
             if (child_state):
                 candidate = alfabeta(child_state, depth - 1, alpha, beta)
                 if candidate[1] > best_move[1]:
@@ -48,18 +46,12 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
                 alpha = max(alpha, best_move[1])
                 if alpha >= beta:
                     undo_move(state, move)
-                    # print("undo", len(state.v_possible_moves),
-                    #       len(state.h_possible_moves))
                     break
             undo_move(state, move)
-            # print("undo", len(state.v_possible_moves),
-            #       len(state.h_possible_moves))
     else:
         best_move = ((-1, -1), 1001)
         for move in set(state.h_possible_moves):
             child_state = modify_state(state, move)
-            # print("play", len(state.v_possible_moves),
-            #       len(state.h_possible_moves))
             if (child_state):
                 (candidate) = alfabeta(child_state, depth - 1, alpha, beta)
                 if candidate[1] < best_move[1]:
@@ -67,16 +59,12 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
                 beta = min(beta, best_move[1])
                 if alpha >= beta:
                     undo_move(state, move)
-                    # print("undo", len(state.v_possible_moves),
-                    #       len(state.h_possible_moves))
                     break
             undo_move(state, move)
-            # print("undo", len(state.v_possible_moves),
-            #       len(state.h_possible_moves))
     return best_move
 
 
-MIN_DEPTH = 5
+MIN_DEPTH = 3
 
 
 def dynamic_depth(state: State) -> int:
@@ -97,11 +85,11 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
     print_state(game_state)
     while not is_game_over(game_state):
         if to_move == Player.AI:
-            # depth = dynamic_depth(game_state)
-            # print(depth)
+            depth = dynamic_depth(game_state)
+            print(depth)
 
             start_time = time()
-            move, _ = alfabeta(game_state, MIN_DEPTH, -math.inf, math.inf)
+            move, _ = alfabeta(game_state, depth, -math.inf, math.inf)
 
             move_duration_list.append((move_number, time() - start_time))
         else:
