@@ -75,11 +75,6 @@ def modify_state(state: State, move: Move) -> State | None:
 def undo_move(state: State, move: Move) -> State | None:
     (x, y) = move
 
-    if state.to_move is Turn.HORIZONTAL and not (state.board[x-1][y] == 1 and state.board[x][y] == 1):
-        return None
-    elif state.to_move is Turn.VERTICAL and not (state.board[x][y] == 2 and state.board[x][y + 1] == 2):
-        return None
-
     if state.to_move == Turn.VERTICAL:
         effects_to_v = H_EFFECTS_TO_V
         effects_to_h = H_EFFECTS_TO_H
@@ -102,7 +97,7 @@ def undo_move(state: State, move: Move) -> State | None:
 
     for cx, cy in effects_to_v:
         p_move = x + cx, y + cy
-        if is_valid_move_on_board(state.board, p_move, Turn.HORIZONTAL):
+        if is_valid_move_on_board(state.board, p_move, Turn.VERTICAL):
             state.v_possible_moves.add(p_move)
 
     return state

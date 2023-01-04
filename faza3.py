@@ -39,8 +39,8 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
         best_move = ((-1, -1), -1001)
         for move in set(state.v_possible_moves):
             child_state = modify_state(state, move)
-            print("play", len(state.v_possible_moves),
-                  len(state.h_possible_moves))
+            # print("play", len(state.v_possible_moves),
+            #       len(state.h_possible_moves))
             if (child_state):
                 candidate = alfabeta(child_state, depth - 1, alpha, beta)
                 if candidate[1] > best_move[1]:
@@ -48,18 +48,18 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
                 alpha = max(alpha, best_move[1])
                 if alpha >= beta:
                     undo_move(state, move)
-                    print("undo", len(state.v_possible_moves),
-                          len(state.h_possible_moves))
+                    # print("undo", len(state.v_possible_moves),
+                    #       len(state.h_possible_moves))
                     break
             undo_move(state, move)
-            print("undo", len(state.v_possible_moves),
-                  len(state.h_possible_moves))
+            # print("undo", len(state.v_possible_moves),
+            #       len(state.h_possible_moves))
     else:
         best_move = ((-1, -1), 1001)
         for move in set(state.h_possible_moves):
             child_state = modify_state(state, move)
-            print("play", len(state.v_possible_moves),
-                  len(state.h_possible_moves))
+            # print("play", len(state.v_possible_moves),
+            #       len(state.h_possible_moves))
             if (child_state):
                 (candidate) = alfabeta(child_state, depth - 1, alpha, beta)
                 if candidate[1] < best_move[1]:
@@ -67,16 +67,16 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move,
                 beta = min(beta, best_move[1])
                 if alpha >= beta:
                     undo_move(state, move)
-                    print("undo", len(state.v_possible_moves),
-                          len(state.h_possible_moves))
+                    # print("undo", len(state.v_possible_moves),
+                    #       len(state.h_possible_moves))
                     break
             undo_move(state, move)
-            print("undo", len(state.v_possible_moves),
-                  len(state.h_possible_moves))
+            # print("undo", len(state.v_possible_moves),
+            #       len(state.h_possible_moves))
     return best_move
 
 
-MIN_DEPTH = 4
+MIN_DEPTH = 5
 
 
 def dynamic_depth(state: State) -> int:
@@ -119,6 +119,6 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 if __name__ == "__main__":
     game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
 
-    with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board.txt", "w") as f:
+    with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board_undo_move.txt", "w") as f:
         for t in move_duration_list:
             f.write(f"{t}\n")
