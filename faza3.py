@@ -45,7 +45,10 @@ def evaluation_function_generator_lc(a: int, b: int, c: int, d: int) -> Callable
             return 300 if state.to_move is Turn.HORIZONTAL else -300
 
         (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
-        return a*len(state.v_possible_moves) + b*len(v_safe_moves) - (c*len(state.h_possible_moves) + d*len(h_safe_moves))
+        eval = a*len(state.v_possible_moves) + b*len(v_safe_moves) - \
+            (c*len(state.h_possible_moves) + d*len(h_safe_moves))
+
+        return eval + 10 if state.to_move is Turn.HORIZONTAL else eval - 10
     return evaluate_state
 
 
@@ -79,7 +82,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
             modify_state(state, move)
 
             # tt_val = tt.retrieve(state.board)
-            move_eval = weight_state(state)
+            move_eval = evaluate_state(state)
 
             undo_move(state, move)
 
@@ -110,7 +113,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
             modify_state(state, move)
 
             # tt_val = tt.retrieve(state.board)
-            move_eval = weight_state(state)
+            move_eval = evaluate_state(state)
 
             undo_move(state, move)
 
@@ -141,13 +144,15 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
     return best_move
 
 
-MIN_DEPTH = 5
+MIN_DEPTH = 6
 
 
 def dynamic_depth(state: State) -> int:
-    res = 1 / (len(state.h_possible_moves) + len(state.v_possible_moves)
-               ) * state.n * state.m + 8 - (state.n + state.m) / 4
-    return max(int(res), MIN_DEPTH)
+    res = 1 + (50 - state.n - state.m) / \
+        math.sqrt((len(state.v_possible_moves) + len(state.h_possible_moves)))
+    print(res)
+    # return max(int(round(res)), MIN_DEPTH)
+    return int(round(res))
 
 
 move_duration_list = []
@@ -159,7 +164,7 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
     to_move, next_to_move = player1, player2
 
-    player1_evaluator = evaluation_function_generator_lc(2, 3, 2, 3)
+    player1_evaluator = evaluation_function_generator_lc(2, 4, 3, 4)
     player2_evaluator = evaluation_function_generator_lc(2, 3, 2, 3)
 
     to_evaluate, next_to_evaluate = player1_evaluator, player2_evaluator

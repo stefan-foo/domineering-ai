@@ -11,18 +11,18 @@ class TranspositionTable:
         self.misses = 0
 
     def store(self, board, best_move, depth):
-        self.table[self.cache_key(board)] = best_move, depth
+        self.table[self.hash_board(board)] = best_move, depth
 
     def retrieve(self, board):
         # return None
-        key = self.cache_key(board)
+        key = self.hash_board(board)
         if key in self.table:
             self.hits += 1
             return self.table[key]
         self.misses += 1
         return None
 
-    def cache_key(self, board) -> int:
+    def hash_board(self, board) -> int:
         hash = 0
         for i in range(len(board)):
             for j in range(len(board)):
