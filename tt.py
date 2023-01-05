@@ -14,7 +14,7 @@ class TranspositionTable:
         self.table[self.cache_key(board)] = best_move, depth
 
     def retrieve(self, board):
-        return None
+        # return None
         key = self.cache_key(board)
         if key in self.table:
             self.hits += 1
