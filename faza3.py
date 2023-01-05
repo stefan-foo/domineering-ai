@@ -32,6 +32,13 @@ def evaluate_state(state: State) -> int:
     return 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
 
 
+def weight_state(state: State) -> int:
+    if is_game_over(state):
+        return 300 if state.to_move is Turn.HORIZONTAL else -300
+
+    return len(state.v_possible_moves) - len(state.h_possible_moves)
+
+
 def evaluation_function_generator_lc(a: int, b: int, c: int, d: int) -> Callable[[State], int]:
     def evaluate_state(state: State) -> int:
         if is_game_over(state):
@@ -43,6 +50,7 @@ def evaluation_function_generator_lc(a: int, b: int, c: int, d: int) -> Callable
 
 
 tt_cutoff = 0
+ab_cutoff = 0
 
 ENABLE_TT = True
 
@@ -52,6 +60,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
         value = evaluation_function(state)
         return ((-1, -1), value)
 
+    global ab_cutoff
     if ENABLE_TT:
         global tt_cutoff
 
@@ -64,7 +73,21 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
+
+        sorted_moves = []
         for move in set(state.v_possible_moves):
+            modify_state(state, move)
+
+            # tt_val = tt.retrieve(state.board)
+            move_eval = weight_state(state)
+
+            undo_move(state, move)
+
+            sorted_moves.append((move_eval, move))
+        sorted_moves.sort(reverse=True)
+
+        for _, move in sorted_moves:
+            # for move in set(state.v_possible_moves):
             child_state = modify_state(state, move)
             if (child_state):
                 candidate = alfabeta(child_state, depth - 1,
@@ -74,11 +97,28 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
                 alpha = max(alpha, best_move[1])
                 if alpha >= beta:
                     undo_move(state, move)
+
+                    # global ab_cutoff
+                    ab_cutoff += 1
                     break
             undo_move(state, move)
     else:
         best_move = ((-1, -1), 1001)
+
+        sorted_moves = []
         for move in set(state.h_possible_moves):
+            modify_state(state, move)
+
+            # tt_val = tt.retrieve(state.board)
+            move_eval = weight_state(state)
+
+            undo_move(state, move)
+
+            sorted_moves.append((move_eval, move))
+        sorted_moves.sort()
+
+        for _, move in sorted_moves:
+            # for move in set(state.h_possible_moves):
             child_state = modify_state(state, move)
             # child_state = derive_state(state, move)
             if (child_state):
@@ -89,11 +129,14 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
                 beta = min(beta, best_move[1])
                 if alpha >= beta:
                     undo_move(state, move)
+
+                    # global ab_cutoff
+                    ab_cutoff += 1
                     break
             undo_move(state, move)
 
     if ENABLE_TT:
-        tt.store(state.board, (best_move), depth)
+        tt.store(state.board, best_move, depth)
 
     return best_move
 
@@ -116,8 +159,8 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
     to_move, next_to_move = player1, player2
 
-    player1_evaluator = evaluation_function_generator_lc(1, 4, 10, 6)
-    player2_evaluator = evaluation_function_generator_lc(1, 4, 10, 6)
+    player1_evaluator = evaluation_function_generator_lc(2, 3, 2, 3)
+    player2_evaluator = evaluation_function_generator_lc(2, 3, 2, 3)
 
     to_evaluate, next_to_evaluate = player1_evaluator, player2_evaluator
 
@@ -145,11 +188,12 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
         print_state(game_state)
 
-    print("Hits: ", tt.hits, " Misses: ", tt.misses, " Used: ", tt_cutoff)
+    print("Hits: ", tt.hits, " Misses: ", tt.misses,
+          " Used: ", tt_cutoff, " AB cutoffs: ", ab_cutoff)
 
 
 if __name__ == "__main__":
-    game_loop(8, 8, Player.HUMAN, Player.AI, Turn.VERTICAL)
+    game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
 
     ttAppend = "_tt" if ENABLE_TT else ""
 
