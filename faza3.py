@@ -33,12 +33,15 @@ def evaluate_state(state: State) -> int:
 
 tt_cutoff = 0
 
+ENABLE_TT = True
+
 
 def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: TranspositionTable) -> tuple[Move, int]:
     if depth == 0 or is_game_over(state):
         value = evaluate_state(state)
         return ((-1, -1), value)
 
+<<<<<<< HEAD
     global tt_cutoff
 
     tt_val = tt.retrieve(state.board)
@@ -47,6 +50,17 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
         if depth <= tt_depth:
             tt_cutoff += 1
             return tt_move
+=======
+    if ENABLE_TT:
+        global tt_cutoff
+
+        tt_val = tt.retrieve(state.board)
+        if tt_val is not None:
+            tt_move, tt_depth = tt_val
+            if depth <= tt_depth:
+                tt_cutoff += 1
+                return tt_move
+>>>>>>> 3dba07f40f4d6a9539ea98c60c2a25bee9f18f2f
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
@@ -76,8 +90,15 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
                     undo_move(state, move)
                     break
             undo_move(state, move)
+<<<<<<< HEAD
 
     tt.store(state.board, (best_move), depth)
+=======
+
+    if ENABLE_TT:
+        tt.store(state.board, (best_move), depth)
+
+>>>>>>> 3dba07f40f4d6a9539ea98c60c2a25bee9f18f2f
     return best_move
 
 
@@ -127,7 +148,12 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
 if __name__ == "__main__":
     game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
+<<<<<<< HEAD
+=======
 
-    with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board_undo_move.txt", "w") as f:
+    ttAppend = "_tt" if ENABLE_TT else ""
+>>>>>>> 3dba07f40f4d6a9539ea98c60c2a25bee9f18f2f
+
+    with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board_undo_move{ttAppend}.txt", "w") as f:
         for t in move_duration_list:
             f.write(f"{t}\n")
