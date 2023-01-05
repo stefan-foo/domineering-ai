@@ -39,49 +39,49 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
         value = evaluate_state(state)
         return ((-1, -1), value)
 
-    # global tt_cutoff
+    global tt_cutoff
 
-    # tt_val = tt.retrieve(state.board)
-    # if tt_val is not None:
-    #     tt_move, tt_depth = tt_val
-    #     if depth <= tt_depth:
-    #         tt_cutoff += 1
-    #         return tt_move
+    tt_val = tt.retrieve(state.board)
+    if tt_val is not None:
+        tt_move, tt_depth = tt_val
+        if depth <= tt_depth:
+            tt_cutoff += 1
+            return tt_move
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
         for move in set(state.v_possible_moves):
-            # child_state = modify_state(state, move)
-            child_state = derive_state(state, move)
+            child_state = modify_state(state, move)
+            # child_state = derive_state(state, move)
             if (child_state):
                 candidate = alfabeta(child_state, depth - 1, alpha, beta, tt)
                 if candidate[1] > best_move[1]:
                     best_move = (move, candidate[1])
                 alpha = max(alpha, best_move[1])
                 if alpha >= beta:
-                    # undo_move(state, move)
+                    undo_move(state, move)
                     break
-            # undo_move(state, move)
+            undo_move(state, move)
     else:
         best_move = ((-1, -1), 1001)
         for move in set(state.h_possible_moves):
-            # child_state = modify_state(state, move)
-            child_state = derive_state(state, move)
+            child_state = modify_state(state, move)
+            # child_state = derive_state(state, move)
             if (child_state):
                 (candidate) = alfabeta(child_state, depth - 1, alpha, beta, tt)
                 if candidate[1] < best_move[1]:
                     best_move = (move, candidate[1])
                 beta = min(beta, best_move[1])
                 if alpha >= beta:
-                    # undo_move(state, move)
+                    undo_move(state, move)
                     break
-            # undo_move(state, move)
+            undo_move(state, move)
 
-    # tt.store(state.board, (best_move), depth)
+    tt.store(state.board, (best_move), depth)
     return best_move
 
 
-MIN_DEPTH = 4
+MIN_DEPTH = 5
 
 
 def dynamic_depth(state: State) -> int:
@@ -126,7 +126,7 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
 
 if __name__ == "__main__":
-    game_loop(8, 8, Player.AI, Player.HUMAN, Turn.VERTICAL)
+    game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
 
     with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board_undo_move.txt", "w") as f:
         for t in move_duration_list:
