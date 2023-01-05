@@ -3,6 +3,7 @@ from faza1 import *
 from faza2 import *
 from time import time
 from tt import *
+from _collections_abc import Callable
 
 
 def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
@@ -25,10 +26,20 @@ def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
 
 def evaluate_state(state: State) -> int:
     if is_game_over(state):
-        return 100 if state.to_move is Turn.HORIZONTAL else -100
+        return 300 if state.to_move is Turn.HORIZONTAL else -300
 
     (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
     return 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
+
+
+def evaluation_function_generator_lc(a: int, b: int, c: int, d: int) -> Callable[[State], int]:
+    def evaluate_state(state: State) -> int:
+        if is_game_over(state):
+            return 300 if state.to_move is Turn.HORIZONTAL else -300
+
+        (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
+        return a*len(state.v_possible_moves) + b*len(v_safe_moves) - (c*len(state.h_possible_moves) + d*len(h_safe_moves))
+    return evaluate_state
 
 
 tt_cutoff = 0
@@ -36,21 +47,11 @@ tt_cutoff = 0
 ENABLE_TT = True
 
 
-def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: TranspositionTable) -> tuple[Move, int]:
+def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_function: Callable[[State], int], tt: TranspositionTable) -> tuple[Move, int]:
     if depth == 0 or is_game_over(state):
-        value = evaluate_state(state)
+        value = evaluation_function(state)
         return ((-1, -1), value)
 
-<<<<<<< HEAD
-    global tt_cutoff
-
-    tt_val = tt.retrieve(state.board)
-    if tt_val is not None:
-        tt_move, tt_depth = tt_val
-        if depth <= tt_depth:
-            tt_cutoff += 1
-            return tt_move
-=======
     if ENABLE_TT:
         global tt_cutoff
 
@@ -60,15 +61,14 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
             if depth <= tt_depth:
                 tt_cutoff += 1
                 return tt_move
->>>>>>> 3dba07f40f4d6a9539ea98c60c2a25bee9f18f2f
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
         for move in set(state.v_possible_moves):
             child_state = modify_state(state, move)
-            # child_state = derive_state(state, move)
             if (child_state):
-                candidate = alfabeta(child_state, depth - 1, alpha, beta, tt)
+                candidate = alfabeta(child_state, depth - 1,
+                                     alpha, beta, evaluation_function, tt)
                 if candidate[1] > best_move[1]:
                     best_move = (move, candidate[1])
                 alpha = max(alpha, best_move[1])
@@ -82,7 +82,8 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
             child_state = modify_state(state, move)
             # child_state = derive_state(state, move)
             if (child_state):
-                (candidate) = alfabeta(child_state, depth - 1, alpha, beta, tt)
+                candidate = alfabeta(child_state, depth -
+                                     1, alpha, beta,  evaluation_function, tt)
                 if candidate[1] < best_move[1]:
                     best_move = (move, candidate[1])
                 beta = min(beta, best_move[1])
@@ -90,15 +91,10 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
                     undo_move(state, move)
                     break
             undo_move(state, move)
-<<<<<<< HEAD
-
-    tt.store(state.board, (best_move), depth)
-=======
 
     if ENABLE_TT:
         tt.store(state.board, (best_move), depth)
 
->>>>>>> 3dba07f40f4d6a9539ea98c60c2a25bee9f18f2f
     return best_move
 
 
@@ -120,6 +116,11 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
     to_move, next_to_move = player1, player2
 
+    player1_evaluator = evaluation_function_generator_lc(1, 4, 10, 6)
+    player2_evaluator = evaluation_function_generator_lc(1, 4, 10, 6)
+
+    to_evaluate, next_to_evaluate = player1_evaluator, player2_evaluator
+
     move_number = 1
     print_state(game_state)
     while not is_game_over(game_state):
@@ -129,7 +130,7 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
             start_time = time()
             move, _ = alfabeta(game_state, depth, -math.inf,
-                               math.inf, tt)
+                               math.inf, to_evaluate, tt)
 
             move_duration_list.append((move_number, time() - start_time))
         else:
@@ -139,6 +140,7 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
         if new_state:
             game_state = new_state
             to_move, next_to_move = next_to_move, to_move
+            # to_evaluate, next_to_evaluate = next_to_evaluate, to_evaluate
             move_number += 1
 
         print_state(game_state)
@@ -147,12 +149,9 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
 
 if __name__ == "__main__":
-    game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
-<<<<<<< HEAD
-=======
+    game_loop(8, 8, Player.HUMAN, Player.AI, Turn.VERTICAL)
 
     ttAppend = "_tt" if ENABLE_TT else ""
->>>>>>> 3dba07f40f4d6a9539ea98c60c2a25bee9f18f2f
 
     with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board_undo_move{ttAppend}.txt", "w") as f:
         for t in move_duration_list:
