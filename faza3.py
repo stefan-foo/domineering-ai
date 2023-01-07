@@ -29,14 +29,19 @@ def evaluate_state(state: State) -> int:
         return 300 if state.to_move is Turn.HORIZONTAL else -300
 
     (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
-    return 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
+    eval = 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - \
+        (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
+
+    return eval + 10 if state.to_move is Turn.HORIZONTAL else eval - 10
 
 
-def weight_state(state: State) -> int:
+def evaluate_state_simple(state: State) -> int:
     if is_game_over(state):
         return 300 if state.to_move is Turn.HORIZONTAL else -300
 
-    return len(state.v_possible_moves) - len(state.h_possible_moves)
+    eval = len(state.v_possible_moves) - len(state.h_possible_moves)
+
+    return eval + 10 if state.to_move is Turn.HORIZONTAL else eval - 10
 
 
 def evaluation_function_generator_lc(a: int, b: int, c: int, d: int) -> Callable[[State], int]:
@@ -56,6 +61,8 @@ tt_cutoff = 0
 ab_cutoff = 0
 
 ENABLE_TT = True
+MIN_DEPTH = 5
+ENABLE_MOVE_SORTING = True
 
 
 def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_function: Callable[[State], int], tt: TranspositionTable) -> tuple[Move, int]:
@@ -77,12 +84,12 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
 
-        sorted_moves = []
+        sorted_moves = list[tuple[int, Move]]()
         for move in set(state.v_possible_moves):
             modify_state(state, move)
 
             # tt_val = tt.retrieve(state.board)
-            move_eval = evaluate_state(state)
+            move_eval = evaluation_function(state)
 
             undo_move(state, move)
 
@@ -108,12 +115,12 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
     else:
         best_move = ((-1, -1), 1001)
 
-        sorted_moves = []
+        sorted_moves = list[tuple[int, Move]]()
         for move in set(state.h_possible_moves):
             modify_state(state, move)
 
             # tt_val = tt.retrieve(state.board)
-            move_eval = evaluate_state(state)
+            move_eval = evaluation_function(state)
 
             undo_move(state, move)
 
@@ -144,9 +151,6 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, evaluation_fun
     return best_move
 
 
-MIN_DEPTH = 6
-
-
 def dynamic_depth(state: State) -> int:
     res = 1 + (50 - state.n - state.m) / \
         math.sqrt((len(state.v_possible_moves) + len(state.h_possible_moves)))
@@ -155,7 +159,7 @@ def dynamic_depth(state: State) -> int:
     return int(round(res))
 
 
-move_duration_list = []
+move_duration_list = list[tuple[int, float]]()
 
 
 def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: Turn) -> None:
@@ -198,10 +202,13 @@ def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: T
 
 
 if __name__ == "__main__":
-    game_loop(8, 8, Player.AI, Player.AI, Turn.VERTICAL)
+    N = 8
+    M = 8
+    game_loop(N, M, Player.AI, Player.HUMAN, Turn.VERTICAL)
 
     ttAppend = "_tt" if ENABLE_TT else ""
+    moveSorting = "_move_sorting" if ENABLE_MOVE_SORTING else ""
 
-    with open(f"moves_duration_8x8_depth_{MIN_DEPTH}_two_sets_board_undo_move{ttAppend}.txt", "w") as f:
+    with open(f"moves_duration_{N}x{M}_depth_{MIN_DEPTH}_two_sets_board_undo_move{ttAppend}{moveSorting}.txt", "w") as f:
         for t in move_duration_list:
             f.write(f"{t}\n")
