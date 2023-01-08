@@ -27,11 +27,13 @@ def evaluate_state(state: State) -> int:
     if is_game_over(state):
         return 100 if state.to_move is Turn.HORIZONTAL else -100
 
-    (v_isolated_moves, h_isolated_moves) = derive_isolated_moves(state)
-    vil, hil = len(v_isolated_moves), len(h_isolated_moves)
-    vpl, hpl = len(state.v_possible_moves), len(state.h_possible_moves)
+    value = 0
 
-    return 2*vpl + 3*vil - (2 * hpl + 3*hil) + (5 if state.to_move is Turn.HORIZONTAL else -5)
+    (v_isolated_moves, h_isolated_moves) = derive_isolated_moves(state)
+    value += 3 * (len(v_isolated_moves) - len(h_isolated_moves))
+    value += 2 * (len(state.v_possible_moves) - len(state.h_possible_moves))
+
+    return value + (5 if state.to_move is Turn.HORIZONTAL else -5)
 
 
 tt_cutoff = 0
