@@ -9,10 +9,7 @@ H_EFFECTS_TO_H = ((0, 0), (0, 1), (0, -1))
 H_EFFECTS_TO_V = ((0, 0), (0, 1), (1, 0), (1, 1))
 
 
-def derive_state(state: State, move: Move) -> None | State:
-    if not is_valid_move(state, move):
-        return None
-
+def derive_state(state: State, move: Move) -> State:
     (x, y) = move
 
     v_possible_moves_copy = set(state.v_possible_moves)
@@ -43,10 +40,7 @@ def derive_state(state: State, move: Move) -> None | State:
     return State(state.n, state.m, board_copy, v_possible_moves_copy, h_possible_moves_copy, next_to_move)
 
 
-def modify_state(state: State, move: Move) -> State | None:
-    if not is_valid_move(state, move):
-        return None
-
+def modify_state(state: State, move: Move) -> State:
     (x, y) = move
 
     if state.to_move == Turn.VERTICAL:
