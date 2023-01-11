@@ -122,7 +122,7 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
 
 
 def dynamic_depth(state: State) -> int:
-    rm = len(state.h_possible_moves) + len(state.v_possible_moves)
+    rm = max(len(state.h_possible_moves) + len(state.v_possible_moves), 21)
 
     return int(1.5 + 32 / math.sqrt(rm))
 
