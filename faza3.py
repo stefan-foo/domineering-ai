@@ -5,22 +5,35 @@ from time import time
 from tt import *
 
 
-def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
-    v_isolated_moves = {
-        (x, y) for (x, y) in state.v_possible_moves
-        if (x, y) not in state.h_possible_moves
-        and (x-1, y) not in state.h_possible_moves
-        and (x, y-1) not in state.h_possible_moves
-        and (x-1, y-1) not in state.h_possible_moves}
+def count_isolated_moves(state: State) -> tuple[int, int]:
+    v_isolated_count = 0
+    h_isolated_count = 0
 
-    h_isolated_moves = {
-        (x, y) for (x, y) in state.h_possible_moves
-        if (x, y) not in state.v_possible_moves
-        and (x, y+1) not in state.v_possible_moves
-        and (x+1, y) not in state.v_possible_moves
-        and (x+1, y+1) not in state.v_possible_moves}
+    for j in range(0, state.m):
+        i = 1
+        while i < state.n:
+            if state.board[i][j] == 0 and state.board[i-1][j] == 0 \
+                    and (i, j) not in state.h_possible_moves \
+                    and (i-1, j) not in state.h_possible_moves \
+                    and (i, j-1) not in state.h_possible_moves \
+                    and (i-1, j-1) not in state.h_possible_moves:
+                v_isolated_count += 1
+                i += 1
+            i += 1
 
-    return (v_isolated_moves, h_isolated_moves)
+    for i in range(0, state.n):
+        j = 0
+        while j < state.m - 1:
+            if state.board[i][j] == 0 and state.board[i][j+1] == 0 \
+                    and (i, j) not in state.v_possible_moves \
+                    and (i, j+1) not in state.v_possible_moves \
+                    and (i+1, j) not in state.v_possible_moves \
+                    and (i+1, j+1) not in state.v_possible_moves:
+                h_isolated_count += 1
+                j += 1
+            j += 1
+
+    return (v_isolated_count, h_isolated_count)
 
 
 def evaluate_state(state: State) -> int:
@@ -29,11 +42,12 @@ def evaluate_state(state: State) -> int:
 
     value = 0
 
-    (v_isolated_moves, h_isolated_moves) = derive_isolated_moves(state)
-    value += 3 * (len(v_isolated_moves) - len(h_isolated_moves))
+    v_im_count, h_im_count = count_isolated_moves(state)
+
+    value += 3 * (v_im_count - h_im_count)
     value += 2 * (len(state.v_possible_moves) - len(state.h_possible_moves))
 
-    return value + (5 if state.to_move is Turn.HORIZONTAL else -5)
+    return value
 
 
 tt_cutoff = 0
@@ -92,9 +106,22 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
             tt_cutoff += 1
             return tt_move
 
+    sorted_moves = list[tuple[int, Move]]()
+    for move in list(state.v_possible_moves if state.to_move is Turn.VERTICAL else state.h_possible_moves):
+        modify_state(state, move)
+
+        move_eval = evaluate_state(state)
+
+        undo_move(state, move)
+
+        sorted_moves.append((move_eval, move))
+    sorted_moves.sort(
+        reverse=(True if state.to_move is Turn.VERTICAL else False))
+
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
-        for move in set(state.v_possible_moves):
+        for _, move in sorted_moves:
+            # for move in list(state.v_possible_moves):
             modify_state(state, move)
             candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
             if candidate[1] > best_move[1]:
@@ -106,7 +133,8 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
             undo_move(state, move)
     else:
         best_move = ((-1, -1), 1001)
-        for move in set(state.h_possible_moves):
+        for _, move in sorted_moves:
+            # for move in list(state.h_possible_moves):
             modify_state(state, move)
             candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
             if candidate[1] < best_move[1]:
@@ -124,7 +152,7 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
 def dynamic_depth(state: State) -> int:
     rm = max(len(state.h_possible_moves) + len(state.v_possible_moves), 21)
 
-    return int(1.5 + 32 / math.sqrt(rm))
+    return int(1.5 + 32 / math.sqrt(max(rm - 10, 1)))
 
 
 move_duration_list = []
