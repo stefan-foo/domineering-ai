@@ -66,7 +66,7 @@ def modify_state(state: State, move: Move) -> State:
     return state
 
 
-def undo_move(state: State, move: Move) -> State | None:
+def undo_move(state: State, move: Move) -> State:
     (x, y) = move
 
     if state.to_move == Turn.VERTICAL:

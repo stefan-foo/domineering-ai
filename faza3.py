@@ -25,7 +25,7 @@ def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
 
 def evaluate_state(state: State) -> int:
     if is_game_over(state):
-        return 100 if state.to_move is Turn.HORIZONTAL else -100
+        return 1000 if state.to_move is Turn.HORIZONTAL else -1000
 
     value = 0
 
