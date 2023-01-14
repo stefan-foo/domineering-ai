@@ -108,7 +108,7 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
         best_move = ((-1, -1), 1001)
         for move in set(state.h_possible_moves):
             modify_state(state, move)
-            (candidate) = alfabeta_bt(state, depth - 1, alpha, beta, tt)
+            candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
             if candidate[1] < best_move[1]:
                 best_move = (move, candidate[1])
             beta = min(beta, best_move[1])
