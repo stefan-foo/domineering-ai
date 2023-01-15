@@ -81,7 +81,7 @@ def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: Transposit
         best_move = ((-1, -1), 1001)
         for move in set(state.h_possible_moves):
             child_state = derive_state(state, move)
-            (candidate) = alfabeta(child_state, depth - 1, alpha, beta, tt)
+            candidate = alfabeta(child_state, depth - 1, alpha, beta, tt)
             if candidate[1] < best_move[1]:
                 best_move = (move, candidate[1])
             beta = min(beta, best_move[1])
@@ -116,12 +116,11 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
 
         sorted_moves.append((move_eval, move))
     sorted_moves.sort(
-        reverse=(True if state.to_move is Turn.VERTICAL else False))
+        reverse=(True if state.to_move is Turn.VERTICAL else False), key=lambda x: x[0])
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
         for _, move in sorted_moves:
-            # for move in list(state.v_possible_moves):
             modify_state(state, move)
             candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
             if candidate[1] > best_move[1]:
@@ -134,7 +133,6 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
     else:
         best_move = ((-1, -1), 1001)
         for _, move in sorted_moves:
-            # for move in list(state.h_possible_moves):
             modify_state(state, move)
             candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
             if candidate[1] < best_move[1]:
@@ -150,9 +148,9 @@ def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: Transpo
 
 
 def dynamic_depth(state: State) -> int:
-    rm = max(len(state.h_possible_moves) + len(state.v_possible_moves), 21)
+    rm = len(state.h_possible_moves) + len(state.v_possible_moves)
 
-    return int(1.5 + 32 / math.sqrt(max(rm - 10, 1)))
+    return int(1.5 + 32 / math.sqrt(max(rm - 10, 10)))
 
 
 move_duration_list = []
