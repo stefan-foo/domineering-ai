@@ -1,100 +1,199 @@
 import math
 from faza1 import *
-from faza2 import derive_state, input_valid_move
+from faza2 import *
+from time import time
+from tt import *
 
 
-class PlayingMode(Enum):
-    PLAYER_VS_PLAYER = 0,
-    PLAYER_VS_AI = 1,
-    AI_VS_AI = 2
+def count_isolated_moves(state: State) -> tuple[int, int]:
+    v_isolated_count = 0
+    h_isolated_count = 0
 
+    for j in range(0, state.m):
+        i = 1
+        while i < state.n:
+            if state.board[i][j] == 0 and state.board[i-1][j] == 0 \
+                    and (i, j) not in state.h_possible_moves \
+                    and (i-1, j) not in state.h_possible_moves \
+                    and (i, j-1) not in state.h_possible_moves \
+                    and (i-1, j-1) not in state.h_possible_moves:
+                v_isolated_count += 1
+                i += 1
+            i += 1
 
-def derive_isolated_moves(state: State) -> tuple[set[Move], set[Move]]:
-    v_isolated_moves = {
-        (x, y) for (x, y) in state.v_possible_moves
-        if (x, y) not in state.h_possible_moves
-        and (x-1, y) not in state.h_possible_moves
-        and (x, y-1) not in state.h_possible_moves
-        and (x-1, y-1) not in state.h_possible_moves}
+    for i in range(0, state.n):
+        j = 0
+        while j < state.m - 1:
+            if state.board[i][j] == 0 and state.board[i][j+1] == 0 \
+                    and (i, j) not in state.v_possible_moves \
+                    and (i, j+1) not in state.v_possible_moves \
+                    and (i+1, j) not in state.v_possible_moves \
+                    and (i+1, j+1) not in state.v_possible_moves:
+                h_isolated_count += 1
+                j += 1
+            j += 1
 
-    h_isolated_moves = {
-        (x, y) for (x, y) in state.h_possible_moves
-        if (x, y) not in state.v_possible_moves
-        and (x, y+1) not in state.v_possible_moves
-        and (x+1, y) not in state.v_possible_moves
-        and (x+1, y+1) not in state.v_possible_moves}
-
-    return (v_isolated_moves, h_isolated_moves)
+    return (v_isolated_count, h_isolated_count)
 
 
 def evaluate_state(state: State) -> int:
     if is_game_over(state):
-        return 100 if state.to_move is Turn.HORIZONTAL else -100
+        return 1000 if state.to_move is Turn.HORIZONTAL else -1000
 
-    (v_safe_moves, h_safe_moves) = derive_isolated_moves(state)
-    return 2*len(state.v_possible_moves) + 3*len(v_safe_moves) - (2*len(state.h_possible_moves) + 3*len(h_safe_moves))
+    value = 0
+
+    v_im_count, h_im_count = count_isolated_moves(state)
+
+    value += 3 * (v_im_count - h_im_count)
+    value += 2 * (len(state.v_possible_moves) - len(state.h_possible_moves))
+
+    return value
 
 
-# @lru_cache(maxsize=256)
-def alfabeta(state: State, depth: int, alpha: float, beta: float) -> tuple[Move, int]:
+tt_cutoff = 0
+
+
+def alfabeta(state: State, depth: int, alpha: float, beta: float, tt: TranspositionTable) -> tuple[Move, int]:
     if depth == 0 or is_game_over(state):
-        return ((-1, -1), evaluate_state(state))
+        value = evaluate_state(state)
+        return ((-1, -1), value)
+
+    global tt_cutoff
+
+    tt_val = tt.retrieve(state.board)
+    if tt_val is not None:
+        tt_move, tt_depth = tt_val
+        if depth <= tt_depth:
+            tt_cutoff += 1
+            return tt_move
 
     if state.to_move is Turn.VERTICAL:
         best_move = ((-1, -1), -1001)
-        for move in state.v_possible_moves:
+        for move in set(state.v_possible_moves):
             child_state = derive_state(state, move)
-            if (child_state):
-                candidate = alfabeta(child_state,  depth - 1, alpha, beta)
-                if candidate[1] > best_move[1]:
-                    best_move = (move, candidate[1])
-                alpha = max(alpha, best_move[1])
-                if alpha >= beta:
-                    break
+            candidate = alfabeta(child_state, depth - 1, alpha, beta, tt)
+            if candidate[1] > best_move[1]:
+                best_move = (move, candidate[1])
+            alpha = max(alpha, best_move[1])
+            if alpha >= beta:
+                break
     else:
         best_move = ((-1, -1), 1001)
-        for move in state.h_possible_moves:
+        for move in set(state.h_possible_moves):
             child_state = derive_state(state, move)
-            if (child_state):
-                (candidate) = alfabeta(child_state, depth - 1, alpha, beta)
-                if candidate[1] < best_move[1]:
-                    best_move = (move, candidate[1])
-                beta = min(beta, best_move[1])
-                if alpha >= beta:
-                    break
+            candidate = alfabeta(child_state, depth - 1, alpha, beta, tt)
+            if candidate[1] < best_move[1]:
+                best_move = (move, candidate[1])
+            beta = min(beta, best_move[1])
+            if alpha >= beta:
+                break
+
+    tt.store(state.board, (best_move), depth)
     return best_move
 
 
-MIN_DEPTH_TEST = 4
+def alfabeta_bt(state: State, depth: int, alpha: float, beta: float, tt: TranspositionTable) -> tuple[Move, int]:
+    if depth == 0 or is_game_over(state):
+        value = evaluate_state(state)
+        return ((-1, -1), value)
+
+    global tt_cutoff
+
+    tt_val = tt.retrieve(state.board)
+    if tt_val is not None:
+        tt_move, tt_depth = tt_val
+        if depth <= tt_depth:
+            tt_cutoff += 1
+            return tt_move
+
+    sorted_moves = list[tuple[int, Move]]()
+    for move in list(state.v_possible_moves if state.to_move is Turn.VERTICAL else state.h_possible_moves):
+        modify_state(state, move)
+
+        move_eval = evaluate_state(state)
+
+        undo_move(state, move)
+
+        sorted_moves.append((move_eval, move))
+    sorted_moves.sort(
+        reverse=(True if state.to_move is Turn.VERTICAL else False), key=lambda x: x[0])
+
+    if state.to_move is Turn.VERTICAL:
+        best_move = ((-1, -1), -1001)
+        for _, move in sorted_moves:
+            modify_state(state, move)
+            candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
+            if candidate[1] > best_move[1]:
+                best_move = (move, candidate[1])
+            alpha = max(alpha, best_move[1])
+            if alpha >= beta:
+                undo_move(state, move)
+                break
+            undo_move(state, move)
+    else:
+        best_move = ((-1, -1), 1001)
+        for _, move in sorted_moves:
+            modify_state(state, move)
+            candidate = alfabeta_bt(state, depth - 1, alpha, beta, tt)
+            if candidate[1] < best_move[1]:
+                best_move = (move, candidate[1])
+            beta = min(beta, best_move[1])
+            if alpha >= beta:
+                undo_move(state, move)
+                break
+            undo_move(state, move)
+
+    tt.store(state.board, (best_move), depth)
+    return best_move
 
 
 def dynamic_depth(state: State) -> int:
-    res = 1 / (len(state.h_possible_moves) + len(state.v_possible_moves)
-               ) * state.n * state.m + 8 - (state.n + state.m) / 4
-    return max(int(res), MIN_DEPTH_TEST)
+    rm = len(state.h_possible_moves) + len(state.v_possible_moves)
+
+    return int(1.5 + 32 / math.sqrt(max(rm - 10, 10)))
+
+
+move_duration_list = []
 
 
 def game_loop(n: int, m: int, player1: Player, player2: Player, first_to_move: Turn) -> None:
+    tt = TranspositionTable(n, m)
     game_state = create_initial_state(n, m, first_to_move)
 
     to_move, next_to_move = player1, player2
 
+    move_number = 1
     print_state(game_state)
     while not is_game_over(game_state):
         if to_move == Player.AI:
             depth = dynamic_depth(game_state)
             print(depth)
-            move, _ = alfabeta(game_state, depth, -math.inf, math.inf)
+
+            start_time = time()
+
+            move, _ = alfabeta_bt(game_state, depth, -math.inf, math.inf, tt)
+
+            move_duration_list.append((move_number, time() - start_time))
         else:
             move = input_valid_move(game_state)
 
-        new_state = derive_state(game_state, move)
-        if new_state:
-            game_state = new_state
-            to_move, next_to_move = next_to_move, to_move
+        game_state = derive_state(game_state, move)
+        to_move, next_to_move = next_to_move, to_move
+        move_number += 1
 
         print_state(game_state)
 
+    print("Hits: ", tt.hits, " Misses: ", tt.misses, " Used: ", tt_cutoff)
+
 
 if __name__ == "__main__":
-    game_loop(10, 10, Player.AI, Player.AI, Turn.VERTICAL)
+    n, m = input_board_dimensions()
+
+    player1 = input_player_type("Player 1: ")
+    player2 = input_player_type("Player 2: ")
+
+    game_loop(n, m, player1, player2, Turn.VERTICAL)
+
+    with open(f"moves_duration_{n}x{m}_undo_move_tt.txt", "w") as f:
+        for t in move_duration_list:
+            f.write(f"{t}\n")
