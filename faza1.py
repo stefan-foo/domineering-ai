@@ -106,7 +106,7 @@ def create_initial_state(n: int = 8, m: int = 8, initial_to_move: Turn = Turn.VE
 def parse_move(move: str) -> Move | None:
     result = move_matcher.search(move)
     return (
-        int(result.group('xcord'))-1,
+        int(result.group('xcord')) - 1,
         int(ord(result.group('ycord').upper()))-ord('A')) if result else None
 
 
@@ -175,7 +175,13 @@ def input_move(to_move: Turn) -> Move | None:
 
     move: str = input(
         f"[{'VERTICAL' if to_move is Turn.VERTICAL else 'HORIZONTAL'}] enter move: ")
-    return parse_move(move)
+
+    parsed_move = parse_move(move)
+    if (parsed_move is None):
+        return None
+    if (to_move is Turn.VERTICAL):
+        return (parsed_move[0] + 1, parsed_move[1])
+    return parsed_move
 
 
 def input_player_type(prompt: str = "") -> Player:
